@@ -1,0 +1,82 @@
+name: Lukitils
+version: '${project.version}'
+main: me.lukiiy.utils.main
+api-version: '1.20'
+load: STARTUP
+authors: [Lukiiy]
+description: small utilities plugin, formally named LukiiyUtils
+commands:
+  god:
+    description: "Toggles invulnerability state"
+    aliases: [ invulnerability, invul ]
+    permission: lukitils.god
+    usage: '/<command> [player]'
+  fly:
+    description: "Toggles flight state"
+    aliases: [ flight ]
+    permission: lukitils.fly
+    usage: '/<command> [player]'
+  broadcast:
+    description: "Broadcasts a message"
+    permission: lukitils.broadcast
+    aliases: [ bc, bcast ]
+    usage: '/<command> <message>'
+  invsee:
+    description: "Shows a player's Inventory"
+    permission: lukitils.invsee
+    aliases: [ inventory ]
+    usage: '/<command> <player>'
+  echest:
+    description: "Shows a player's Echest Inventory"
+    permission: lukitils.echest
+    usage: '/<command> [player]'
+  ping:
+    description: "Shows ping"
+    usage: '/<command> [player]'
+  playerinfo:
+    description: "Shows a player's information"
+    permission: lukitils.playerinfo
+    usage: '/<command> [player]'
+  vanish:
+    description: "Toggles invisibility state"
+    permission: lukitils.vanish
+    aliases: [ v ]
+    usage: '/<command> [player]'
+  vanishlist:
+    description: "Lists every player using /vanish"
+    permission: lukitils.vanish
+    aliases: [ vlist ]
+    usage: '/<command>'
+  displaytoast:
+    description: "Displays a custom toast to a player"
+    permission: lukitils.toast
+    usage: '/<command> <player> <style> <material> <message>'
+  heal:
+    description: "Heals a player"
+    permission: lukitils.heal
+    usage: '/<command> [player]'
+  feed:
+    description: "uh- feeds... a player?"
+    permission: lukitils.feed
+    usage: '/<command> [player]'
+  barelife:
+    description: "This command shouldn't even exist."
+    permission: lukitils.basicallykill
+    usage: '/<command> <player>'
+  gravity:
+    description: "Transforms blocks into falling blocks"
+    permission: lukitils.gravityzone
+    usage: '/<command>'
+  slimechunk:
+    description: "did I waste time making this command?"
+    permission: lukitils.canslimesspawnhere
+    usage: '/<command> [player]'
+    aliases: [ smilechunk ]
+  triggerscreen:
+    description: "Trigger specific screen effects to a player"
+    permission: lukitils.triggerscreen
+    usage: '/<command> <effect> [player]'
+  ignite:
+    description: "Seta a player on fire"
+    permission: lukitils.ignite
+    usage: '/<command> <player> <seconds>'
