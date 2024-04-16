@@ -1,6 +1,7 @@
 package me.lukiiy.utils.cmd
 
 import me.lukiiy.utils.main
+import net.kyori.adventure.text.serializer.json.JSONComponentSerializer
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
@@ -13,7 +14,7 @@ class Broadcast : CommandExecutor {
             commandSender.sendMessage(main.argsErrorMsg)
             return true
         }
-        Bukkit.broadcast(LegacyComponentSerializer.legacyAmpersand().deserialize(java.lang.String.join(" ", *strings)))
+        Bukkit.broadcast(LegacyComponentSerializer.legacyAmpersand().deserialize(strings.joinToString(" ")))
         return true
     }
 }

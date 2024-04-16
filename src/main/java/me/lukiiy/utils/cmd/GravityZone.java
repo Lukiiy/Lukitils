@@ -3,6 +3,8 @@ package me.lukiiy.utils.cmd;
 import me.lukiiy.utils.cool.Builds;
 import me.lukiiy.utils.cool.Presets;
 import me.lukiiy.utils.main;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
@@ -29,18 +31,31 @@ public class GravityZone implements CommandExecutor {
             return true;
         }
 
+        int area = 3;
+        if (strings.length == 1) {
+            try {
+                area = Integer.parseInt(strings[0]);
+            } catch (NumberFormatException e) {
+                commandSender.sendMessage(Presets.Companion.msg("Invalid number!"));
+                return true;
+            }
+        }
+        if (area < 1) area = 1;
+        if (area > 25) area = 25;
+
         World w = block.getWorld();
-        Set<Block> blocks = Builds.INSTANCE.getBlocks(block.getLocation().add(-3, 0, -3), block.getLocation().add(3, 6, 3));
+        Set<Block> blocks = Builds.INSTANCE.getBlocksPerf(block.getLocation().add(-area, 0, -area), block.getLocation().add(area, area * 2, area));
+        int size = blocks.size();
         for (Block b : blocks) {
-            if (!b.getType().isCollidable()) continue;
-            FallingBlock f = w.spawn(b.getLocation(), FallingBlock.class, entity -> {
-                entity.setBlockData(b.getBlockData());
-                entity.setCancelDrop(true);
+            w.spawn(b.getLocation().toCenterLocation(), FallingBlock.class, f -> {
+                f.setBlockData(b.getBlockData());
+                f.setBlockState(b.getState());
+                f.setDropItem(true);
             });
-            b.breakNaturally(false);
+            b.setType(Material.AIR);
         }
 
-        commandSender.sendMessage(Presets.Companion.msg("Spawning falling blocks..."));
+        commandSender.sendMessage(Presets.Companion.msg("Spawning " + size + " falling blocks..."));
         return true;
     }
 }

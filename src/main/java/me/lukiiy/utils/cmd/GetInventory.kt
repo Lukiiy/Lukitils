@@ -3,6 +3,7 @@ package me.lukiiy.utils.cmd
 import me.lukiiy.utils.cool.PlayerHelper
 import me.lukiiy.utils.cool.Presets
 import me.lukiiy.utils.main
+import net.kyori.adventure.text.Component
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -15,11 +16,8 @@ class GetInventory : CommandExecutor {
             return true
         }
         val target = PlayerHelper.getCommandTarget(commandSender, strings)
-        commandSender.sendMessage(
-            Presets.msg("Showing ").append(target.displayName().color(Presets.ACCENT_NEUTRAL))
-                .append(Presets.why("'s Inventory."))
-        )
         commandSender.openInventory(target.inventory)
+        commandSender.sendMessage(Presets.msg(Component.text("Showing ").append(target.name().color(Presets.ACCENT_NEUTRAL)).append(Component.text("'s Inventory"))))
         return true
     }
 }

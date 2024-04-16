@@ -59,7 +59,7 @@ public class Heal implements CommandExecutor {
         Component message = Presets.Companion.msg("Healed ");
 
         if (target != commandSender) {
-            commandSender.sendMessage(message.append(target.displayName().color(Presets.Companion.getACCENT_NEUTRAL())));
+            commandSender.sendMessage(message.append(target.name().color(Presets.Companion.getACCENT_NEUTRAL())));
             message = message.append(Presets.Companion.why("(by " + commandSender.getName() + ")"));
         }
 

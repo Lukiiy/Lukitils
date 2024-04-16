@@ -1,6 +1,5 @@
 package me.lukiiy.utils.system;
 
-import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import me.lukiiy.utils.cool.PlayerHelper;
 import me.lukiiy.utils.cool.Presets;
 import me.lukiiy.utils.main;
@@ -11,8 +10,11 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.server.ServerListPingEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -50,46 +52,58 @@ public class Vanish implements CommandExecutor, Listener {
             message = message.append(Presets.Companion.why(" (by " + commandSender.getName() + ")"));
         }
 
-        if (!invisible) hide(target);
-        else show(target);
+        if (!invisible) {
+            hide(target);
+            vanish.add(target.getUniqueId());
+        }
+        else {
+            show(target);
+            vanish.remove(target.getUniqueId());
+        }
         target.sendMessage(message);
         return true;
     }
 
-    private void hide(Player player) {
+    private void hide(Player p) {
         Bukkit.getOnlinePlayers().stream()
-                .filter(online -> !player.equals(online))
-                .forEach(online -> online.hidePlayer(main.plugin, player));
-        vanish.add(player.getUniqueId());
+                .filter(online -> !p.equals(online))
+                .forEach(online -> online.hidePlayer(main.plugin, p));
     }
 
-    private void show(Player player) {
+    private void show(Player p) {
         Bukkit.getOnlinePlayers().stream()
-                .filter(online -> !player.equals(online))
-                .forEach(online -> online.showPlayer(main.plugin, player));
-        vanish.remove(player.getUniqueId());
+                .filter(online -> !p.equals(online))
+                .forEach(online -> online.showPlayer(main.plugin, p));
     }
 
-    @EventHandler
-    public void revanish(PlayerJoinEvent e) {
+    @EventHandler(priority = EventPriority.LOW)
+    public void join(PlayerJoinEvent e) {
         if (vanish.isEmpty()) return;
-        Player player = e.getPlayer();
+        Player p = e.getPlayer();
 
-        if (vanish.contains(player.getUniqueId())) {
-            hide(player);
+        if (vanish.contains(p.getUniqueId())) {
+            e.joinMessage(null);
+            hide(p);
+            p.sendMessage(Presets.Companion.msg("You are still vanished."));
         }
 
         Bukkit.getScheduler().runTaskLater(main.plugin, () -> {
             for (UUID vanished : vanish) {
                 Player v = Bukkit.getPlayer(vanished);
-                if (v != null) player.hidePlayer(main.plugin, v);
+                if (v != null) p.hidePlayer(main.plugin, v);
             }
-        }, 5L);
+        }, 2L);
     }
 
+    @EventHandler(priority = EventPriority.LOW)
+    public void quit(PlayerQuitEvent e) {
+        if (vanish.isEmpty()) return;
+        Player p = e.getPlayer();
+        if (vanish.contains(p.getUniqueId())) e.quitMessage(null);
+    }
 
     @EventHandler
-    public void serverlist(PaperServerListPingEvent e) {
+    public void noListing(ServerListPingEvent e) {
         Iterator<Player> iterator = e.iterator();
         while (iterator.hasNext()) {
             Player player = iterator.next();

@@ -28,12 +28,9 @@ class SlimeChunk : CommandExecutor {
             return true
         }
         val message = msg("Is ")
-            .append(target.displayName().color(ACCENT_NEUTRAL))
+            .append(target.name().color(ACCENT_NEUTRAL))
             .append(why(" in a slime chunk? "))
-            .append(
-                if (target.location.chunk.isSlimeChunk) Component.text("ʏᴇѕ")
-                    .color(ACCENT_TRUE) else Component.text("ɴᴏ").color(ACCENT_FALSE)
-            )
+            .append(if (target.location.chunk.isSlimeChunk) Component.text("ʏᴇѕ").color(ACCENT_TRUE) else Component.text("ɴᴏ").color(ACCENT_FALSE))
         commandSender.sendMessage(message)
         return true
     }

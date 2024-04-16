@@ -10,6 +10,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.command.Command;
@@ -18,6 +19,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class PlayerInfo implements CommandExecutor {
     // todo: it works... ig
 
@@ -25,11 +29,11 @@ public class PlayerInfo implements CommandExecutor {
     final Component prefix = Component.text(" • ").color(Presets.Companion.getPRIMARY()); // Can be removed because it is only used once
 
     private Component info(String key, String value) {
-        return prefix.append(Component.text(key + ": ").color(Presets.Companion.getACCENT_NEUTRAL()).append(Component.text(value).color(Presets.Companion.getPRIMARY())));
+        return prefix.append(Component.text(key + ": ").color(Presets.Companion.getACCENT_NEUTRAL()).append(Component.text(value).color(Presets.Companion.getSECONDARY())));
     }
 
     private Component info(String key, Component value) {
-        return prefix.append(Component.text(key + ": ").color(Presets.Companion.getACCENT_NEUTRAL()).append(value.color(Presets.Companion.getPRIMARY())));
+        return prefix.append(Component.text(key + ": ").color(Presets.Companion.getACCENT_NEUTRAL()).append(value.color(Presets.Companion.getSECONDARY())));
     }
 
     @Override
@@ -68,15 +72,14 @@ public class PlayerInfo implements CommandExecutor {
         commandSender.sendMessage(info("Spawn", PlayerHelper.getLocationComponent(spawn)));
         if (death != null) commandSender.sendMessage(info("Death", PlayerHelper.getLocationComponent(death)));
 
-        commandSender.sendMessage(Component.text(" Conditions").color(section));
+        commandSender.sendMessage(Component.text(" States").color(section));
         commandSender.sendMessage(info("Gamemode", target.getGameMode().toString()));
         commandSender.sendMessage(info("Fly", String.valueOf(target.getAllowFlight())));
         commandSender.sendMessage(info("God", String.valueOf(target.isInvulnerable())));
 
         commandSender.sendMessage(Component.text(" Technical").color(section));
         commandSender.sendMessage(info("UUID", uuid));
-        commandSender.sendMessage(info("Protoc. Version", String.valueOf(target.getProtocolVersion())));
-        commandSender.sendMessage(info("Ping", String.valueOf(target.getPing())));
         return true;
     }
+
 }

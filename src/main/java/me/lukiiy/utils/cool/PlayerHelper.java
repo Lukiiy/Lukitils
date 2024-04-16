@@ -10,8 +10,6 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 public class PlayerHelper {
-    // todo: reorganize file
-
     public static Location getSpawnLocation(Player p) {
         Location location = p.getRespawnLocation();
         return location != null ? location : p.getWorld().getSpawnLocation();
@@ -34,10 +32,6 @@ public class PlayerHelper {
         return Component.text(string)
                 .clickEvent(ClickEvent.suggestCommand("/tp @s " + string))
                 .hoverEvent(HoverEvent.showText(Component.text("Click to suggest TP Command").color(NamedTextColor.GREEN)));
-    }
-
-    public static Component state(boolean condition) {
-        return condition ? main.ON : main.OFF;
     }
 
 }

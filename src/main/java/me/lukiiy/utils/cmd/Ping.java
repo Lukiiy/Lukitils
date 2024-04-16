@@ -30,15 +30,7 @@ public class Ping implements CommandExecutor {
             return true;
         }
 
-        Component message = Presets.Companion.msg("You have ");
-
-        if (target != commandSender) {
-            message = target.displayName().color(Presets.Companion.getACCENT_NEUTRAL())
-                    .append(Presets.Companion.why(" has "));
-        }
-        message = message.append(Component.text(target.getPing()).color(Presets.Companion.getACCENT_NEUTRAL())).append(Presets.Companion.why("ms."));
-
-        commandSender.sendMessage(message);
+        commandSender.sendMessage(Presets.Companion.msg(target.name().append(Component.text(" has ").append(Component.text(target.getPing()).color(Presets.Companion.getACCENT_NEUTRAL())).append(Component.text(" ms.")))));
         return true;
     }
 }

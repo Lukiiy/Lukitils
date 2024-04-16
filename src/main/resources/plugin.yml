@@ -22,19 +22,19 @@ commands:
     aliases: [ bc, bcast ]
     usage: '/<command> <message>'
   invsee:
-    description: "Shows a player's Inventory"
+    description: "Opens a player's inventory"
     permission: lukitils.invsee
     aliases: [ inventory ]
     usage: '/<command> <player>'
   echest:
-    description: "Shows a player's Echest Inventory"
+    description: "Opens a player's ender chest"
     permission: lukitils.echest
     usage: '/<command> [player]'
   ping:
-    description: "Shows ping"
+    description: "Shows a player's ping"
     usage: '/<command> [player]'
   playerinfo:
-    description: "Shows a player's information"
+    description: "Displays a player's information"
     permission: lukitils.playerinfo
     usage: '/<command> [player]'
   vanish:

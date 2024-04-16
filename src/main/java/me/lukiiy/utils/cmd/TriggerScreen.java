@@ -53,7 +53,7 @@ public class TriggerScreen implements CommandExecutor, TabExecutor {
                 break;
         }
 
-        commandSender.sendMessage(Presets.Companion.msg("Triggered " + type.name() + " effect to ").append(target.displayName().color(Presets.Companion.getACCENT_NEUTRAL())));
+        commandSender.sendMessage(Presets.Companion.msg("Triggered " + type.name() + " effect to ").append(target.name().color(Presets.Companion.getACCENT_NEUTRAL())));
         return true;
     }
 

@@ -39,7 +39,7 @@ public class God implements CommandExecutor, Listener {
 
         if (target != commandSender) {
             commandSender.sendMessage(message.append(Presets.Companion.why(" for ")).append(target.name().color(Presets.Companion.getACCENT_NEUTRAL())));
-            message = message.append(Presets.Companion.why(" (by " + commandSender.getName() + ")"));
+            message = message.append(Presets.Companion.why(" (by ").append(target.name().color(Presets.Companion.getACCENT_NEUTRAL())).append(Presets.Companion.why(")")));
         }
 
         target.setInvulnerable(!invulnerable);

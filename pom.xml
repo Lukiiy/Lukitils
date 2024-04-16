@@ -13,7 +13,7 @@
 
     <description>small utilities plugin, formelly named LukiiyUtils</description>
     <properties>
-        <java.version>17</java.version>
+        <java.version>16</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <kotlin.version>1.9.23</kotlin.version>
     </properties>
