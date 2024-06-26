@@ -16,7 +16,6 @@ class Broadcast : CommandExecutor {
             return true
         }
         Bukkit.broadcast(LegacyComponentSerializer.legacyAmpersand().deserialize(strings.joinToString(" ")))
-        Bukkit.getOnlinePlayers().forEach {p: Player? -> p!!.sendRichMessage(MiniMessage.miniMessage().serialize(LegacyComponentSerializer.legacyAmpersand().deserialize(strings.joinToString(" "))))}
         return true
     }
 }
