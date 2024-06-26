@@ -1,5 +1,6 @@
 package me.lukiiy.utils.system;
 
+import com.destroystokyo.paper.event.server.PaperServerListPingEvent;
 import me.lukiiy.utils.cool.PlayerHelper;
 import me.lukiiy.utils.cool.Presets;
 import me.lukiiy.utils.main;
@@ -27,16 +28,11 @@ public class Vanish implements CommandExecutor, Listener {
 
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
-        Player target;
-
-        if (!(commandSender instanceof Player)) {
-            if (strings.length < 1) {
-                commandSender.sendMessage(main.argsErrorMsg);
-                return true;
-            }
-            target = Bukkit.getPlayer(strings[0]);
-        } else target = PlayerHelper.getCommandTarget((Player) commandSender, strings);
-
+        if (!(commandSender instanceof Player) && strings.length == 0) {
+            commandSender.sendMessage(main.argsErrorMsg);
+            return true;
+        }
+        Player target = strings.length > 0 ? Bukkit.getPlayer(strings[0]) : (Player) commandSender;
         if (target == null) {
             commandSender.sendMessage(main.notFoundMsg);
             return true;
@@ -46,7 +42,6 @@ public class Vanish implements CommandExecutor, Listener {
         Component state = invisible ? main.OFF : main.ON;
 
         Component message = Presets.Companion.msg("Vanish is now ").append(state);
-
         if (target != commandSender) {
             commandSender.sendMessage(message.append(Presets.Companion.why(" for ")).append(target.name().color(Presets.Companion.getACCENT_NEUTRAL())));
             message = message.append(Presets.Companion.why(" (by " + commandSender.getName() + ")"));
@@ -55,8 +50,7 @@ public class Vanish implements CommandExecutor, Listener {
         if (!invisible) {
             hide(target);
             vanish.add(target.getUniqueId());
-        }
-        else {
+        } else {
             show(target);
             vanish.remove(target.getUniqueId());
         }
@@ -76,7 +70,7 @@ public class Vanish implements CommandExecutor, Listener {
                 .forEach(online -> online.showPlayer(main.plugin, p));
     }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void join(PlayerJoinEvent e) {
         if (vanish.isEmpty()) return;
         Player p = e.getPlayer();
@@ -95,19 +89,17 @@ public class Vanish implements CommandExecutor, Listener {
         }, 2L);
     }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void quit(PlayerQuitEvent e) {
         if (vanish.isEmpty()) return;
         Player p = e.getPlayer();
         if (vanish.contains(p.getUniqueId())) e.quitMessage(null);
     }
 
-    @EventHandler
-    public void noListing(ServerListPingEvent e) {
-        Iterator<Player> iterator = e.iterator();
-        while (iterator.hasNext()) {
-            Player player = iterator.next();
-            if (vanish.contains(player.getUniqueId())) iterator.remove();
-        }
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void noListing(PaperServerListPingEvent e) {
+        List<PaperServerListPingEvent.ListedPlayerInfo> samples = e.getListedPlayers();
+        samples.removeIf(p -> vanish.contains(p.id()));
+        e.setNumPlayers(samples.size());
     }
 }

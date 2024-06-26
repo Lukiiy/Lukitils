@@ -76,6 +76,7 @@ commands:
     description: "Trigger specific screen effects to a player"
     permission: lukitils.triggerscreen
     usage: '/<command> <effect> [player]'
+    aliases: [ screeneffect ]
   ignite:
     description: "Seta a player on fire"
     permission: lukitils.ignite

@@ -5,6 +5,7 @@ import me.lukiiy.utils.cool.Presets;
 import me.lukiiy.utils.system.God;
 import me.lukiiy.utils.system.Vanish;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -31,6 +32,7 @@ public final class main extends JavaPlugin {
         getCommand("vanishlist").setExecutor(new VanishList());
         getCommand("triggerscreen").setExecutor(new TriggerScreen());
         getCommand("ignite").setExecutor(new Ignite());
+        getCommand("slimechunk").setExecutor(new SlimeChunk());
 
         PluginManager pl = getServer().getPluginManager();
         pl.registerEvents(new God(), this);
@@ -38,8 +40,7 @@ public final class main extends JavaPlugin {
     }
 
     @Override
-    public void onDisable() {
-    }
+    public void onDisable() {}
 
     // Preset
     public static final Component notFoundMsg = Presets.Companion.msg("Player not found!");

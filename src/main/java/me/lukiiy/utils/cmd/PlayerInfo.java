@@ -10,7 +10,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.command.Command;
@@ -18,9 +17,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class PlayerInfo implements CommandExecutor {
     // todo: it works... ig
@@ -60,7 +56,7 @@ public class PlayerInfo implements CommandExecutor {
 
         Component uuid = Component.text(target.getUniqueId().toString()).color(NamedTextColor.GREEN)
                 .hoverEvent(HoverEvent.showText(Component.text("Click to copy!")
-                        .clickEvent(ClickEvent.copyToClipboard(target.getUniqueId().toString()))));
+                .clickEvent(ClickEvent.copyToClipboard(target.getUniqueId().toString()))));
 
         commandSender.sendMessage(Component.text(" Player Stats").color(section));
         commandSender.sendMessage(info("HP", target.getHealth() + (maxHp != null ? "/" + Math.floor(maxHp.getValue()) : "")));

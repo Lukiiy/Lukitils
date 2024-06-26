@@ -18,38 +18,25 @@ import org.jetbrains.annotations.NotNull;
 public class Heal implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
-        Player target;
-
-        if (!(commandSender instanceof Player)) {
-            if (strings.length < 1) {
-                commandSender.sendMessage(main.argsErrorMsg);
-                return true;
-            }
-            target = Bukkit.getPlayer(strings[0]);
-        } else target = PlayerHelper.getCommandTarget((Player) commandSender, strings);
-
+        if (!(commandSender instanceof Player) && strings.length == 0) {
+            commandSender.sendMessage(main.argsErrorMsg);
+            return true;
+        }
+        Player target = strings.length > 0 ? Bukkit.getPlayer(strings[0]) : (Player) commandSender;
         if (target == null) {
             commandSender.sendMessage(main.notFoundMsg);
             return true;
         }
 
         double value = 20;
+        AttributeInstance maxHP = target.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        if (maxHP != null) value = maxHP.getBaseValue();
         if (strings.length > 1) {
-            try {
-                value = Double.parseDouble(strings[1]);
-            } catch (NumberFormatException e) {
-                commandSender.sendMessage(Presets.Companion.warnMsg("Invalid number!"));
-                return true;
-            }
-        } else {
-            AttributeInstance attribute = target.getAttribute(Attribute.GENERIC_MAX_HEALTH);
-            if (attribute != null) value = attribute.getValue();
+            try {value = Double.parseDouble(strings[1]);}
+            catch (NumberFormatException ignored) {}
         }
-        if (value <= 0) {
-            commandSender.sendMessage(Presets.Companion.warnMsg("Must be a positive value greater than 0."));
-            return true;
-        }
-        target.setHealth(value);
+        if (value <= 0) value = 1;
+        target.heal(value);
 
         for (PotionEffect effect : target.getActivePotionEffects()) {
             PotionEffectType type = effect.getType();
@@ -57,12 +44,10 @@ public class Heal implements CommandExecutor {
         }
 
         Component message = Presets.Companion.msg("Healed ");
-
         if (target != commandSender) {
             commandSender.sendMessage(message.append(target.name().color(Presets.Companion.getACCENT_NEUTRAL())));
-            message = message.append(Presets.Companion.why("(by " + commandSender.getName() + ")"));
+            message = message.append(Presets.Companion.why("(by ").append(commandSender.name().color(Presets.Companion.getACCENT_NEUTRAL())).append(Presets.Companion.why(")")));
         }
-
         target.sendMessage(message);
         return true;
     }

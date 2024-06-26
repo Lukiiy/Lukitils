@@ -17,16 +17,11 @@ import org.jetbrains.annotations.NotNull;
 public class God implements CommandExecutor, Listener {
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
-        Player target;
-
-        if (!(commandSender instanceof Player)) {
-            if (strings.length < 1) {
-                commandSender.sendMessage(main.argsErrorMsg);
-                return true;
-            }
-            target = Bukkit.getPlayer(strings[0]);
-        } else target = PlayerHelper.getCommandTarget((Player) commandSender, strings);
-
+        if (!(commandSender instanceof Player) && strings.length == 0) {
+            commandSender.sendMessage(main.argsErrorMsg);
+            return true;
+        }
+        Player target = strings.length > 0 ? Bukkit.getPlayer(strings[0]) : (Player) commandSender;
         if (target == null) {
             commandSender.sendMessage(main.notFoundMsg);
             return true;
@@ -39,7 +34,7 @@ public class God implements CommandExecutor, Listener {
 
         if (target != commandSender) {
             commandSender.sendMessage(message.append(Presets.Companion.why(" for ")).append(target.name().color(Presets.Companion.getACCENT_NEUTRAL())));
-            message = message.append(Presets.Companion.why(" (by ").append(target.name().color(Presets.Companion.getACCENT_NEUTRAL())).append(Presets.Companion.why(")")));
+            message = message.append(Presets.Companion.why("(by ").append(commandSender.name().color(Presets.Companion.getACCENT_NEUTRAL())).append(Presets.Companion.why(")")));
         }
 
         target.setInvulnerable(!invulnerable);

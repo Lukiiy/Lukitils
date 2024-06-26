@@ -1,6 +1,5 @@
 package me.lukiiy.utils.cmd;
 
-import me.lukiiy.utils.cool.PlayerHelper;
 import me.lukiiy.utils.cool.Presets;
 import me.lukiiy.utils.main;
 import net.kyori.adventure.text.Component;
@@ -14,16 +13,11 @@ import org.jetbrains.annotations.NotNull;
 public class Feed implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
-        Player target;
-
-        if (!(commandSender instanceof Player)) {
-            if (strings.length < 1) {
-                commandSender.sendMessage(main.argsErrorMsg);
-                return true;
-            }
-            target = Bukkit.getPlayer(strings[0]);
-        } else target = PlayerHelper.getCommandTarget((Player) commandSender, strings);
-
+        if (!(commandSender instanceof Player) && strings.length == 0) {
+            commandSender.sendMessage(main.argsErrorMsg);
+            return true;
+        }
+        Player target = strings.length > 0 ? Bukkit.getPlayer(strings[0]) : (Player) commandSender;
         if (target == null) {
             commandSender.sendMessage(main.notFoundMsg);
             return true;
@@ -31,26 +25,20 @@ public class Feed implements CommandExecutor {
 
         int value = 20;
         if (strings.length > 1) {
-            try {
-                value = Integer.parseInt(strings[1]);
-            } catch (NumberFormatException e) {
+            try {value = Integer.parseInt(strings[1]);}
+            catch (NumberFormatException ignored) {
                 commandSender.sendMessage(Presets.Companion.warnMsg("Invalid number!"));
                 return true;
             }
         }
-        if (value <= 0) {
-            commandSender.sendMessage(Presets.Companion.warnMsg("Must be a positive value greater than 0."));
-            return true;
-        }
+        if (value <= 0) value = 1;
         target.setFoodLevel(value);
 
         Component message = Presets.Companion.msg("Fed ");
-
         if (target != commandSender) {
             commandSender.sendMessage(message.append(target.name().color(Presets.Companion.getACCENT_NEUTRAL())));
-            message = message.append(Presets.Companion.why("(by " + commandSender.getName() + ")"));
+            message = message.append(Presets.Companion.why("(by ").append(commandSender.name().color(Presets.Companion.getACCENT_NEUTRAL())).append(Presets.Companion.why(")")));
         }
-
         target.sendMessage(message);
         return true;
     }
