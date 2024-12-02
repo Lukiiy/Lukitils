@@ -1,0 +1,7 @@
+name: Lukitils
+version: '3.0'
+main: me.lukiiy.utils.Lukitils
+api-version: '1.21'
+authors: [ Lukiiy ]
+description: Weird but useful plugin
+bootstrapper: me.lukiiy.utils.Boot

@@ -11,15 +11,14 @@ import net.kyori.adventure.text.Component
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
-object BareLife {
+object Fly {
     fun register(): LiteralCommandNode<CommandSourceStack> {
-        return Commands.literal("barelife").requires {it.sender.hasPermission("lukitils.barelife")}
+        return Commands.literal("fly").requires{it.sender.hasPermission("lukitils.fly")}
             .then(Commands.argument("player", ArgumentTypes.player())
                 .executes {
-                    val sender = it.source.sender
                     val target = it.getArgument("player", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().findFirst().orElse(null) ?: return@executes 0
 
-                    handle(sender, target)
+                    handle(it.source.sender, target)
                     Command.SINGLE_SUCCESS
                 })
             .executes {
@@ -32,12 +31,16 @@ object BareLife {
     }
 
     private fun handle(sender: CommandSender, target: Player) {
-        target.apply {
-            health = 1.0
-            foodLevel = 1
-            sendHealthUpdate()
-        }
+        val update = !target.allowFlight
+        val state = if (update) Defaults.ON else Defaults.OFF
 
-        sender.sendMessage(Defaults.msg(Component.text("Set ").append(target.name().color(Defaults.YELLOW)).append(Component.text("'s HP and Hunger to 1"))))
+        val msg = Defaults.msg(Component.text("Flight is now ")).append(state)
+        target.allowFlight = update
+
+        if (target != sender) {
+            sender.sendMessage(msg.append(Component.text(" for ").append(target.name().color(Defaults.YELLOW))).color(Defaults.GRAY))
+            target.sendMessage(msg.append(Component.text(" (by ").append(sender.name().color(Defaults.YELLOW)).append(Component.text(")"))).color(Defaults.GRAY))
+        }
+        else target.sendMessage(msg)
     }
 }

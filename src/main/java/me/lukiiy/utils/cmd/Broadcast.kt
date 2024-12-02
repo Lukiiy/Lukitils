@@ -1,21 +1,22 @@
 package me.lukiiy.utils.cmd
 
-import me.lukiiy.utils.main
-import net.kyori.adventure.text.minimessage.MiniMessage
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+import com.mojang.brigadier.Command
+import com.mojang.brigadier.arguments.StringArgumentType
+import com.mojang.brigadier.tree.LiteralCommandNode
+import io.papermc.paper.command.brigadier.CommandSourceStack
+import io.papermc.paper.command.brigadier.Commands
+import me.lukiiy.utils.Defaults
+import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
-import org.bukkit.command.Command
-import org.bukkit.command.CommandExecutor
-import org.bukkit.command.CommandSender
-import org.bukkit.entity.Player
 
-class Broadcast : CommandExecutor {
-    override fun onCommand(commandSender: CommandSender, command: Command, s: String, strings: Array<String>): Boolean {
-        if (strings.isEmpty()) {
-            commandSender.sendMessage(main.argsErrorMsg)
-            return true
-        }
-        Bukkit.broadcast(LegacyComponentSerializer.legacyAmpersand().deserialize(strings.joinToString(" ")))
-        return true
+object Broadcast {
+    fun register(): LiteralCommandNode<CommandSourceStack> {
+        return Commands.literal("broadcast").requires {it.sender.hasPermission("lukitils.broadcast")}
+            .then(Commands.argument("msg", StringArgumentType.greedyString())
+            .executes {
+                Bukkit.broadcast(Component.newline().append(Defaults.mini("   ${StringArgumentType.getString(it, "msg")}").color(Defaults.YELLOW)).appendNewline())
+                Command.SINGLE_SUCCESS
+            })
+        .build()
     }
 }

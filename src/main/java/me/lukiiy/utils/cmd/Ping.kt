@@ -8,36 +8,26 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
 import net.kyori.adventure.text.Component
-import org.bukkit.command.CommandSender
+import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.entity.Player
 
-object BareLife {
+object Ping {
     fun register(): LiteralCommandNode<CommandSourceStack> {
-        return Commands.literal("barelife").requires {it.sender.hasPermission("lukitils.barelife")}
+        return Commands.literal("ping")
             .then(Commands.argument("player", ArgumentTypes.player())
                 .executes {
                     val sender = it.source.sender
-                    val target = it.getArgument("player", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().findFirst().orElse(null) ?: return@executes 0
+                    val target = it.getArgument("player", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().findFirst().orElse(null) ?: throw Defaults.NOT_FOUND.create()
 
-                    handle(sender, target)
+                    sender.sendMessage(Defaults.msg(target.name().append(Component.text("'s ping is ").append(Component.text(target.ping).color(Defaults.PURPLE).decorate(TextDecoration.UNDERLINED)).append(Component.text(" ms")))))
                     Command.SINGLE_SUCCESS
                 })
             .executes {
-                val sender = it.source.sender as? Player ?: throw Defaults.NOT_FOUND.create()
+                val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER.create()
 
-                handle(sender, sender)
+                sender.sendMessage(Defaults.msg(Component.text("Your ping is ").append(Component.text(sender.ping).color(Defaults.PURPLE).decorate(TextDecoration.UNDERLINED)).append(Component.text("ms"))))
                 Command.SINGLE_SUCCESS
             }
         .build()
-    }
-
-    private fun handle(sender: CommandSender, target: Player) {
-        target.apply {
-            health = 1.0
-            foodLevel = 1
-            sendHealthUpdate()
-        }
-
-        sender.sendMessage(Defaults.msg(Component.text("Set ").append(target.name().color(Defaults.YELLOW)).append(Component.text("'s HP and Hunger to 1"))))
     }
 }
