@@ -23,11 +23,13 @@ import org.bukkit.event.player.PlayerQuitEvent
 import java.util.*
 
 object Vanish : Listener {
+    private val permission = "lukiyils.vanish"
     private val vanished = mutableSetOf<UUID>()
     fun getVanished(): Set<UUID> = vanished
 
     fun registerMain(): LiteralCommandNode<CommandSourceStack> {
-        return Commands.literal("vanish").requires { it.sender.hasPermission("lukitils.vanish") }
+        return Commands.literal("vanish")
+            .requires { it.sender.hasPermission(permission) }
             .then(Commands.argument("player", ArgumentTypes.player())
                 .executes {
                     val sender = it.source.sender
@@ -37,7 +39,7 @@ object Vanish : Listener {
                     Command.SINGLE_SUCCESS
                 })
             .executes {
-                val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER.create()
+                val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
 
                 handle(sender, sender)
                 Command.SINGLE_SUCCESS
@@ -47,8 +49,7 @@ object Vanish : Listener {
 
     private fun handle(sender: CommandSender, target: Player) {
         val isVanished = target.uniqueId in vanished
-        val state = if (isVanished) Defaults.OFF else Defaults.ON
-        var message = Defaults.msg(Component.text("Vanish is now ").append(state))
+        var message = Defaults.msg(Component.text("Vanish is now ").append(if (isVanished) Defaults.OFF else Defaults.ON))
 
         if (target != sender) {
             sender.sendMessage(message.append(Component.text(" for ").color(Defaults.GRAY)).append(target.name().color(Defaults.YELLOW)))
@@ -56,10 +57,10 @@ object Vanish : Listener {
         }
 
         if (!isVanished) {
-            Bukkit.getOnlinePlayers().filterNot { it == target }.forEach { it.hidePlayer(Lukitils.getInstance(), target) }
+            Bukkit.getOnlinePlayers().minus(target).forEach { it.hidePlayer(Lukitils.getInstance(), target) }
             vanished.add(target.uniqueId)
         } else {
-            Bukkit.getOnlinePlayers().filterNot { it == target }.forEach { it.showPlayer(Lukitils.getInstance(), target) }
+            Bukkit.getOnlinePlayers().minus(target).forEach { it.showPlayer(Lukitils.getInstance(), target) }
             vanished.remove(target.uniqueId)
         }
 
@@ -67,19 +68,16 @@ object Vanish : Listener {
     }
 
     fun registerList(): LiteralCommandNode<CommandSourceStack> {
-        return Commands.literal("vanishlist").requires { it.sender.hasPermission("lukitils.vanish") }
+        return Commands.literal("vanishlist")
+            .requires { it.sender.hasPermission(permission) }
             .executes {
                 val sender = it.source.sender
-                if (vanished.isEmpty()) {
-                    sender.sendMessage(Defaults.fail(Component.text("There are no vanished players.")))
-                    Command.SINGLE_SUCCESS
-                }
+                if (vanished.isEmpty()) throw Defaults.CmdException(Component.text("No vanished players found"))
 
-                sender.sendMessage(Defaults.msg(Component.text("Vanished player list:")))
-                for (v in vanished) {
-                    val player = Bukkit.getPlayer(v)
-                    if (player != null) sender.sendMessage(Component.text("• ").color(Defaults.GRAY).append(player.name()))
-                }
+                val players = vanished.mapNotNull { Bukkit.getPlayer(it)?.name() }
+                if (players.isEmpty()) throw Defaults.CmdException(Component.text("No online vanished players found"))
+
+                sender.sendMessage(Defaults.msg(Component.text("Vanished players:").appendNewline().append(Component.join(Defaults.LIST_LIKE, players.map { it.color(Defaults.YELLOW) }))))
                 Command.SINGLE_SUCCESS
             }
         .build()
@@ -104,7 +102,7 @@ object Vanish : Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     fun quit(e: PlayerQuitEvent) {
-        if (vanished.isNotEmpty() && vanished.contains(e.player.uniqueId)) e.quitMessage(null)
+        if (vanished.contains(e.player.uniqueId)) e.quitMessage(null)
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -115,6 +113,6 @@ object Vanish : Listener {
 
     @EventHandler
     fun advancement(e: PlayerAdvancementDoneEvent) {
-        if (vanished.isNotEmpty() && vanished.contains(e.player.uniqueId)) e.message(null)
+        if (vanished.contains(e.player.uniqueId)) e.message(null)
     }
 }

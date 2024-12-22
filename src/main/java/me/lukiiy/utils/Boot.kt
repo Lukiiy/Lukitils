@@ -14,10 +14,11 @@ class Boot : PluginBootstrap {
                 register(Invulnerability.register(), "Toggles invulnerability state", listOf("god", "invul"))
                 register(SimpleStats.registerHeal(), "Heals a player")
                 register(SimpleStats.registerFeed(), "uh- feeds... a player?")
-                register(BareLife.register(), "Sets selected players' hp and foodlevel to 1")
+                register(SimpleStats.registerBare(), "Sets selected players' hp and foodlevel to 1")
                 register(DisplayToast.register(), "Displays a custom advancement toast to a player")
                 register(InventoryViewer.registerInv(), "View a player's inventory", listOf("openinv", "viewinv"))
                 register(InventoryViewer.registerEChest(), "View a player's ender chest", listOf("openechest", "viewechest"))
+                register(InventoryViewer.registerEquip(), "View a player's armor & offhand", listOf("viewequip"))
                 register(Ping.register(), "Displays a player's ping")
                 register(SlimeChunk.register(), "Tells if a player is in a slime chunk")
                 register(Vanish.registerMain(), "Toggles invisibility state", listOf("v"))
@@ -25,7 +26,8 @@ class Boot : PluginBootstrap {
                 register(MassAffect.register(), "Applies various effects to selected players")
                 register(Collapse.register(), "Makes an area collapse!")
                 register(Ignite.register(), "Sets selected players on fire", listOf("burn"))
-                register(PlayerData.register(), "Shows some player data", listOf("playerinfo"))
+                register(PlayerData.registerOnline(), "Shows player data from online users", listOf("playerinfo"))
+                register(PlayerData.registerOffline(), "Shows player data from offline users", listOf("offplayerinfo"))
             }
         }
     }

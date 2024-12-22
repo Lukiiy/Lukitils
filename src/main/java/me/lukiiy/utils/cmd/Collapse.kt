@@ -7,6 +7,7 @@ import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.help.Build
+import me.lukiiy.utils.help.MessageUtils
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.block.Block
@@ -16,21 +17,22 @@ import org.bukkit.inventory.BlockInventoryHolder
 
 object Collapse {
     private val detectionRange = 32
-    private val noBlock = Defaults.CUSTOM_ERR("Expected target within a distance of $detectionRange blocks.")
+    private val noBlock = Defaults.CmdException(Component.text("Expected target within a distance of $detectionRange blocks."))
 
     fun register(): LiteralCommandNode<CommandSourceStack> {
-        return Commands.literal("collapse").requires { it.sender.hasPermission("lukitils.collapse") }
+        return Commands.literal("collapse")
+            .requires { it.sender.hasPermission("lukitils.collapse") }
             .then(Commands.argument("radius", IntegerArgumentType.integer(1))
                 .executes {
-                    val sender = it.source.sender as? Player ?: throw Defaults.NOT_FOUND.create();
-                    val block = sender.getTargetBlockExact(detectionRange) ?: throw noBlock.create()
+                    val sender = it.source.sender as? Player ?: throw Defaults.NOT_FOUND
+                    val block = sender.getTargetBlockExact(detectionRange) ?: throw noBlock
 
                     handle(sender, block, IntegerArgumentType.getInteger(it, "radius"))
                     Command.SINGLE_SUCCESS
                 })
             .executes {
-                val sender = it.source.sender as? Player ?: throw Defaults.NOT_FOUND.create()
-                val block = sender.getTargetBlockExact(detectionRange) ?: throw noBlock.create()
+                val sender = it.source.sender as? Player ?: throw Defaults.NOT_FOUND
+                val block = sender.getTargetBlockExact(detectionRange) ?: throw noBlock
 
                 handle(sender, block, 3)
                 Command.SINGLE_SUCCESS
@@ -59,6 +61,7 @@ object Collapse {
             b.type = Material.AIR
         }
 
-        player.sendMessage(Defaults.msg(Component.text("Spawning ${blocks.size} falling blocks...")))
+        MessageUtils.adminCmdFeedback(player, "Collapsed ${blocks.size} blocks")
+        player.sendMessage(Defaults.msg(Component.text("Collapsing ${blocks.size} blocks...")))
     }
 }

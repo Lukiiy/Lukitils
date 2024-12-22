@@ -14,12 +14,13 @@ import net.kyori.adventure.text.format.Style
 
 object Ignite {
     fun register(): LiteralCommandNode<CommandSourceStack> {
-        return Commands.literal("ignite").requires { it.sender.hasPermission("lukitils.ignite") }
+        return Commands.literal("ignite")
+            .requires { it.sender.hasPermission("lukitils.ignite") }
             .then(Commands.argument("players", ArgumentTypes.players())
             .then(Commands.argument("seconds", IntegerArgumentType.integer(1))
                 .executes {
                     val sender = it.source.sender
-                    val targets = it.getArgument("players", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().toList().takeIf {it.isNotEmpty()} ?: throw Defaults.NOT_FOUND_MULTI.create()
+                    val targets = it.getArgument("players", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().toList().takeIf {it.isNotEmpty()} ?: throw Defaults.NOT_FOUND
                     val duration = IntegerArgumentType.getInteger(it, "seconds")
 
                     targets.forEach { p -> p.fireTicks = duration * 20 }

@@ -1,53 +1,49 @@
 package me.lukiiy.utils.cmd
 
 import com.mojang.brigadier.Command
+import com.mojang.brigadier.arguments.ArgumentType
 import com.mojang.brigadier.arguments.DoubleArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
+import com.mojang.brigadier.context.CommandContext
+import com.mojang.brigadier.suggestion.Suggestions
+import com.mojang.brigadier.suggestion.SuggestionsBuilder
 import com.mojang.brigadier.tree.LiteralCommandNode
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
+import io.papermc.paper.command.brigadier.MessageComponentSerializer
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
+import io.papermc.paper.command.brigadier.argument.CustomArgumentType
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
-import me.lukiiy.utils.Lukitils
+import me.lukiiy.utils.help.MessageUtils
 import me.lukiiy.utils.help.PlayerUtils
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.title.Title
-import org.bukkit.NamespacedKey
 import org.bukkit.Particle
 import org.bukkit.attribute.Attribute
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.time.Duration
+import java.util.concurrent.CompletableFuture
 
-object MassAffect { // TODO
+object MassAffect {
     fun register(): LiteralCommandNode<CommandSourceStack> {
-        return Commands.literal("massaffect").requires {it.sender.hasPermission("lukitils.massaffect")}
+        return Commands.literal("massaffect")
+            .requires {it.sender.hasPermission("lukitils.massaffect")}
             .then(Commands.argument("players", ArgumentTypes.players())
-            .then(Commands.argument("effect", StringArgumentType.word())
-                .suggests { _, builder ->
-                    val input = builder.remaining.uppercase()
-                    Effect.entries.forEach { if (it.name.startsWith(input)) builder.suggest(it.name.lowercase()) }
-                    builder.buildFuture()
-                }
-//                .then(Commands.argument("intensity", DoubleArgumentType.doubleArg(0.0))
-//                    .executes {
-//                        val targets = it.getArgument("players", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().toList().takeIf {it.isNotEmpty()} ?: throw Defaults.NOT_FOUND_MULTI.create()
-//                        val effect =
-//                            try { Effect.valueOf(StringArgumentType.getString(it, "effect").uppercase()) }
-//                            catch (e: IllegalArgumentException) { throw Defaults.CUSTOM_ERR("This effect doesn't exist.").create() }
-//
-//                        handle(it.source.sender, targets, effect, DoubleArgumentType.getDouble(it, "intensity"))
-//                        Command.SINGLE_SUCCESS
-//                    }) Someday ill fix it
-            .executes {
-                val targets = it.getArgument("players", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().toList().takeIf {it.isNotEmpty()} ?: throw Defaults.NOT_FOUND_MULTI.create()
-                val effect =
-                    try { Effect.valueOf(StringArgumentType.getString(it, "effect").uppercase()) }
-                    catch (e: IllegalArgumentException) { throw Defaults.CUSTOM_ERR("This effect doesn't exist.").create() }
+            .then(Commands.argument("effect", EffectArgument())
+                .then(Commands.argument("intensity", DoubleArgumentType.doubleArg(0.0))
+                    .executes {
+                        val targets = it.getArgument("players", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().toList().takeIf {it.isNotEmpty()} ?: throw Defaults.NOT_FOUND
 
-                handle(it.source.sender, targets, effect, 1.0)
+                        handle(it.source.sender, targets, it.getArgument("effect", Effect::class.java), DoubleArgumentType.getDouble(it, "intensity"))
+                        Command.SINGLE_SUCCESS
+                    })
+            .executes {
+                val targets = it.getArgument("players", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().toList().takeIf {it.isNotEmpty()} ?: throw Defaults.NOT_FOUND
+
+                handle(it.source.sender, targets, it.getArgument("effect", Effect::class.java), 1.0)
                 Command.SINGLE_SUCCESS
             }))
         .build()
@@ -55,32 +51,61 @@ object MassAffect { // TODO
 
     private fun handle(sender: CommandSender, targets: List<Player>, effect: Effect, intensity: Double) {
         targets.forEach { effect.act(it, intensity) }
-        sender.sendMessage(Defaults.msg(
-            if (intensity != 1.0) Component.text("Applying ${effect.name} with intensity $intensity to ").append(PlayerUtils.group(targets, Style.style(Defaults.YELLOW)))
-            else Component.text("Applying ${effect.name} to ").append(PlayerUtils.group(targets, Style.style(Defaults.YELLOW)))
-        ))
+        var msg = "Applying ${effect.name}${if (intensity != 1.0) " with intensity $intensity" else ""} to "
+        if (intensity == 0.0) msg = "Reverting ${effect.name}'s changes for "
+        MessageUtils.adminCmdFeedback(sender, "Massaffected ${PlayerUtils.group(targets)} with ${effect.name}")
+        sender.sendMessage(Defaults.msg(Component.text(msg).append(PlayerUtils.group(targets, Style.style(Defaults.YELLOW)))))
     }
 
-    enum class Effect(val act: (Player, Double) -> Unit) {
-        DEMO({ p, _ -> p.showDemoScreen() }),
-        CREDITS({ p, _ -> p.showWinScreen() }),
-        GUARDIAN({ p, _ -> p.showElderGuardian() }),
-        KABOOM({ p, mult -> p.apply {
+    private enum class Effect(val act: (Player, Double) -> Unit, val desc: String) {
+        DEMO({ p, _ -> p.showDemoScreen() }, "Shows the demo screen"),
+        CREDITS({ p, _ -> p.showWinScreen() }, "Shows the credits screen"),
+        GUARDIAN({ p, _ -> p.showElderGuardian() }, "Shows the Elder Guardian jumpscare"),
+        KABOOM({ p, _ -> p.apply {
             world.apply {
                 spawnParticle(Particle.EXPLOSION_EMITTER, p.location.add(0.0, 1.0, 0.0), 1)
                 strikeLightningEffect(p.location)
             }
-            velocity = velocity.setY(15 * mult)
+            velocity = velocity.setY(15)
             showTitle(Title.title(Component.text("KABOOM!").color(Defaults.RED), Component.empty(), Title.Times.times(Duration.ZERO, Duration.ofSeconds(2), Duration.ofSeconds(1))))
-        }});
-//        SIZEMOD({ p, mult ->
-//            val key = NamespacedKey(Lukitils.getInstance(), "sizeMod")
-//            val scale = 1.0 * mult
-//
-//            PlayerUtils.applyScalarTransientAttribute(p, Attribute.SCALE, key, scale)
-//            PlayerUtils.applyScalarTransientAttribute(p, Attribute.STEP_HEIGHT, key, scale)
-//            PlayerUtils.applyScalarTransientAttribute(p, Attribute.BLOCK_INTERACTION_RANGE, key, scale)
-//            PlayerUtils.applyScalarTransientAttribute(p, Attribute.ENTITY_INTERACTION_RANGE, key, scale)
-//        })
+        }}, "Sends players flying!"),
+        SIZEMOD({ p, mult ->
+            val key = "sizeMod"
+            val scale: Double = 1.0 * mult
+
+            PlayerUtils.applyMultipTransientAttribute(p, Attribute.SCALE, key, scale)
+            PlayerUtils.applyMultipTransientAttribute(p, Attribute.STEP_HEIGHT, key, scale)
+            PlayerUtils.applyMultipTransientAttribute(p, Attribute.BLOCK_INTERACTION_RANGE, key, scale)
+            PlayerUtils.applyMultipTransientAttribute(p, Attribute.ENTITY_INTERACTION_RANGE, key, scale)
+            PlayerUtils.applyMultipTransientAttribute(p, Attribute.SAFE_FALL_DISTANCE, key, if (mult > 0) scale/4 + 1 else 0.0)
+        }, "Changes the size of the players"),
+        LOWGRAVITY({ p, mult ->
+            val key = "lowGravity"
+            val scale: Double = -0.8 * mult
+
+            PlayerUtils.applyMultipTransientAttribute(p, Attribute.GRAVITY, key, scale)
+            PlayerUtils.applyMultipTransientAttribute(p, Attribute.SAFE_FALL_DISTANCE, key, if (mult > 0) scale + 4 else 0.0)
+        }, "Reduces the gravity..."),
+        LONGARMS({ p, mult ->
+            val key = "longArms"
+            val scale: Double = 2.0 * mult
+
+            PlayerUtils.applyMultipTransientAttribute(p, Attribute.BLOCK_INTERACTION_RANGE, key, scale)
+            PlayerUtils.applyMultipTransientAttribute(p, Attribute.ENTITY_INTERACTION_RANGE, key, scale)
+        }, "Increases the reach")
+    }
+
+    private class EffectArgument : CustomArgumentType.Converted<Effect, String> {
+        override fun convert(type: String): Effect {
+            try { return Effect.valueOf(type.uppercase()) }
+            catch (_: IllegalArgumentException) { throw Defaults.CmdException(Component.text("Effect \"$type\" doesn't exist.")) }
+        }
+
+        override fun getNativeType(): ArgumentType<String> = StringArgumentType.string()
+        override fun <S> listSuggestions(context: CommandContext<S>, builder: SuggestionsBuilder): CompletableFuture<Suggestions> {
+            val input = builder.remaining.uppercase()
+            Effect.entries.forEach { if (it.name.startsWith(input)) builder.suggest(it.name, MessageComponentSerializer.message().serialize(Component.text("→ ").color(Defaults.ORANGE).append(Component.text(it.desc).color(Defaults.YELLOW)))) }
+            return builder.buildFuture()
+        }
     }
 }

@@ -1,22 +1,31 @@
 package me.lukiiy.utils.cmd
 
 import com.mojang.brigadier.Command
+import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.tree.LiteralCommandNode
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
-import me.lukiiy.utils.help.ComponentUtils
+import me.lukiiy.utils.help.MessageUtils
 import me.lukiiy.utils.help.PlayerUtils
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TextComponent
+import org.bukkit.Bukkit
+import org.bukkit.OfflinePlayer
+import org.bukkit.Statistic
 import org.bukkit.attribute.Attribute
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import java.text.DecimalFormat
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 object PlayerData {
-    fun register(): LiteralCommandNode<CommandSourceStack> {
+    fun registerOnline(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("playerdata")
             .then(Commands.argument("player", ArgumentTypes.player())
                 .executes {
@@ -27,7 +36,7 @@ object PlayerData {
                     Command.SINGLE_SUCCESS
                 })
             .executes {
-                val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER.create()
+                val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
 
                 handle(sender, sender)
                 Command.SINGLE_SUCCESS
@@ -35,33 +44,77 @@ object PlayerData {
         .build()
     }
 
+    fun registerOffline(): LiteralCommandNode<CommandSourceStack> {
+        return Commands.literal("offplayerdata")
+            .then(Commands.argument("offline_player", StringArgumentType.string())
+                .executes {
+                    val sender = it.source.sender
+                    val target = Bukkit.getOfflinePlayerIfCached(StringArgumentType.getString(it, "offline_player")) ?: throw Defaults.NOT_FOUND
+
+                    handle(sender, target)
+                    Command.SINGLE_SUCCESS
+                })
+            .build()
+    }
+
+    private fun fancyData(title: String, value: Any): TextComponent {return Component.text("$title: ").append(Component.text(value.toString()).color(Defaults.ORANGE))}
+
     private fun handle(sender: CommandSender, target: Player) {
         val basic = listOfNotNull(
-            target.getAttribute(Attribute.MAX_HEALTH)?.value?.let { Component.text("Health: ").append(Component.text("${DecimalFormat("#.#").format(target.health)}/$it").color(Defaults.ORANGE)) },
-            Component.text("Food: ").append(Component.text(target.foodLevel).color(Defaults.ORANGE)),
-            if (target.totalExperience > 0) Component.text("XP: ").append(Component.text(target.totalExperience).color(Defaults.ORANGE)).append(Component.text(" | Level: ").append(Component.text(target.level).color(Defaults.ORANGE))) else null,
-            target.getAttribute(Attribute.ARMOR)?.value?.let { if (it > 0) Component.text("Armor: ").append(Component.text(it).color(Defaults.ORANGE)) else null },
-            Component.text("Gamemode: ").append(Component.text(target.gameMode.name).color(Defaults.ORANGE))
+            target.getAttribute(Attribute.MAX_HEALTH)?.value?.let { fancyData("Health", "${String.format("%.1f", target.health)}/$it") },
+            fancyData("Food", target.foodLevel),
+            if (target.totalExperience > 0) fancyData("XP", target.totalExperience).append(fancyData(" | Level", target.level)) else null,
+            target.getAttribute(Attribute.ARMOR)?.value?.let { if (it > 0) fancyData("Armor", it) else null },
+            fancyData("Gamemode", target.gameMode.name)
         )
 
-        val states = listOfNotNull(
-            if (target.isFlying) Component.text("Fly: ").append(Defaults.ON) else null,
-            if (target.isInvulnerable) Component.text("Invulnerability: ").append(Defaults.ON) else null,
-            if (Vanish.getVanished().contains(target.uniqueId)) Component.text("Vanish: ").append(Defaults.ON) else null
+        val flags = listOfNotNull(
+            if (target.isFlying) "Fly" else null,
+            if (target.isInvulnerable) "Invulnerability" else null,
+            if (Vanish.getVanished().contains(target.uniqueId)) "Vanish" else null
         )
 
         val locations = listOfNotNull(
-            Component.text("Current: ").append(ComponentUtils.coolLocation(target.location).color(Defaults.ORANGE)),
-            Component.text("Spawn: ").append(ComponentUtils.coolLocation(PlayerUtils.getSpawn(target)).color(Defaults.ORANGE)),
-            if (target.compassTarget != PlayerUtils.getSpawn(target)) Component.text("Compass: ").append(ComponentUtils.coolLocation(target.compassTarget).color(Defaults.ORANGE)) else null,
-            target.lastDeathLocation?.let { Component.text("Last death: ").append(ComponentUtils.coolLocation(it).color(Defaults.ORANGE)) }
+            Component.text("Current: ").append(MessageUtils.coolLocation(target.location).color(Defaults.ORANGE)),
+            Component.text("Spawn: ").append(MessageUtils.coolLocation(PlayerUtils.getSpawn(target)).color(Defaults.ORANGE)),
+            if (target.compassTarget != PlayerUtils.getSpawn(target)) Component.text("Compass: ").append(MessageUtils.coolLocation(target.compassTarget).color(Defaults.ORANGE)) else null,
+            target.lastDeathLocation?.let { Component.text("Last death: ").append(MessageUtils.coolLocation(it).color(Defaults.ORANGE)) }
         )
 
         val everything = target.name().color(Defaults.YELLOW)
             .append(Component.text("'s Info").color(Defaults.GRAY)).appendNewline().appendNewline()
             .append(Component.join(Defaults.LIST_LIKE, basic)).appendNewline().appendNewline()
-            .let { if (states.isNotEmpty()) { it.append(Component.join(Defaults.LIST_LIKE, states)).appendNewline().appendNewline() } else it }
+            .let { if (flags.isNotEmpty()) { it.append(Defaults.LIST_PREFIX).append(fancyData("Enabled flags", flags.joinToString(", "))).appendNewline().appendNewline() } else it }
             .append(Component.join(Defaults.LIST_LIKE, locations)).appendNewline()
+
+        sender.sendMessage(Defaults.msg(Component.text("Showing ").append(everything)))
+    }
+
+    fun formatDateData(millis: Long): String {
+        if (millis == 0L) return ""
+        val inputDate = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+        val now = LocalDate.now()
+
+        val formatter = DateTimeFormatter.ofPattern(if (inputDate.year == now.year) "MM/dd" else "MM/dd/yyyy")
+        val daysAgo = ChronoUnit.DAYS.between(inputDate, now)
+
+        return "${inputDate.format(formatter)} ${if (daysAgo > 0) "($daysAgo days ago)" else ""}"
+    }
+
+    private fun handle(sender: CommandSender, target: OfflinePlayer) {
+        if (target.isOnline) throw Defaults.CmdException(Component.text("This user is online"))
+        if (!target.hasPlayedBefore()) throw Defaults.CmdException(Component.text("This player has never played here before"))
+
+        val time = listOfNotNull(
+            fancyData("First login", formatDateData(target.firstPlayed)),
+            fancyData("Last login", formatDateData(target.lastLogin)),
+            fancyData("Last seen", formatDateData(target.lastSeen)),
+            fancyData("Playtime", "${target.getStatistic(Statistic.PLAY_ONE_MINUTE) / 72000} hours")
+        )
+
+        val everything = Component.text(target.name.toString()).color(Defaults.YELLOW)
+            .append(Component.text("'s Offline Info").color(Defaults.GRAY)).appendNewline().appendNewline()
+            .append(Component.join(Defaults.LIST_LIKE, time)).appendNewline()
 
         sender.sendMessage(Defaults.msg(Component.text("Showing ").append(everything)))
     }
