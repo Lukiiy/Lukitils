@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture
 object MassAffect {
     fun register(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("massaffect")
-            .requires {it.sender.hasPermission("lukitils.massaffect")}
+            .requires { it.sender.hasPermission("lukitils.massaffect") }
             .then(Commands.argument("players", ArgumentTypes.players())
             .then(Commands.argument("effect", EffectArgument())
                 .then(Commands.argument("intensity", DoubleArgumentType.doubleArg(0.0))

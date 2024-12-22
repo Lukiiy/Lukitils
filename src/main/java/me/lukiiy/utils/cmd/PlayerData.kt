@@ -27,6 +27,7 @@ import java.time.temporal.ChronoUnit
 object PlayerData {
     fun registerOnline(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("playerdata")
+            .requires { it.sender.hasPermission("lukitils.playerdata") }
             .then(Commands.argument("player", ArgumentTypes.player())
                 .executes {
                     val sender = it.source.sender
@@ -46,6 +47,7 @@ object PlayerData {
 
     fun registerOffline(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("offplayerdata")
+            .requires { it.sender.hasPermission("lukitils.playerdata") }
             .then(Commands.argument("offline_player", StringArgumentType.string())
                 .executes {
                     val sender = it.source.sender
