@@ -6,20 +6,22 @@ import com.mojang.brigadier.tree.LiteralCommandNode
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import me.lukiiy.utils.Defaults
-import me.lukiiy.utils.help.MessageUtils
+import me.lukiiy.utils.help.Utils
+import me.lukiiy.utils.help.Utils.asFancyString
+import me.lukiiy.utils.help.Utils.asPermission
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 
 object Broadcast {
-    fun register(): LiteralCommandNode<CommandSourceStack> {
-        return Commands.literal("broadcast")
-            .requires { it.sender.hasPermission("lukitils.broadcast") }
-            .then(Commands.argument("msg", StringArgumentType.greedyString())
+    private val main = Commands.literal("broadcast")
+        .requires { it.sender.hasPermission("broadcast".asPermission()) }
+        .then(Commands.argument("msg", StringArgumentType.greedyString())
             .executes {
-                MessageUtils.adminCmdFeedback(it.source.sender, "Broadcasted a message")
-                Bukkit.broadcast(Component.newline().append(Defaults.FancyString.deserialize("   ${StringArgumentType.getString(it, "msg")}").color(Defaults.BLUE)).appendNewline())
+                Utils.adminCmdFeedback(it.source.sender, "Broadcasted a message")
+                Bukkit.broadcast(Component.newline().append("   ${StringArgumentType.getString(it, "msg")}".asFancyString()).color(Defaults.BLUE).appendNewline())
+
                 Command.SINGLE_SUCCESS
             })
-        .build()
-    }
+
+    fun register(): LiteralCommandNode<CommandSourceStack> = main.build()
 }

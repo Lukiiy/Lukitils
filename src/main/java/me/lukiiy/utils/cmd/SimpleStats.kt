@@ -9,17 +9,18 @@ import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
+import me.lukiiy.utils.help.Utils.asPermission
 import net.kyori.adventure.text.Component
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.potion.PotionEffectType
 
 object SimpleStats {
-    private val permission = "lukitils.stats"
+    private val req: (CommandSender) -> Boolean = { it.hasPermission("stats".asPermission()) }
 
     fun registerHeal(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("heal")
-            .requires { it.sender.hasPermission(permission) }
+            .requires { req(it.sender) }
             .then(Commands.argument("players", ArgumentTypes.players())
 
                 .then(Commands.argument("amount", DoubleArgumentType.doubleArg(0.0001)).executes {
@@ -58,7 +59,7 @@ object SimpleStats {
 
     fun registerFeed(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("feed")
-            .requires { it.sender.hasPermission(permission) }
+            .requires { req(it.sender) }
             .then(Commands.argument("players", ArgumentTypes.players())
                 .then(Commands.argument("amount", IntegerArgumentType.integer(1)).executes {
                     val targets = it.getArgument("players", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().toList().takeIf {it.isNotEmpty()} ?: throw Defaults.NOT_FOUND
@@ -84,7 +85,7 @@ object SimpleStats {
 
     fun registerBare(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("barelife")
-            .requires { it.sender.hasPermission(permission) }
+            .requires { req(it.sender) }
             .then(Commands.argument("players", ArgumentTypes.players())
                 .executes {
                     val targets = it.getArgument("players", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().toList().takeIf {it.isNotEmpty()} ?: throw Defaults.NOT_FOUND
@@ -114,11 +115,11 @@ object SimpleStats {
             act(it, amount)
 
             if (it != sender) {
-                sender.sendMessage(Defaults.msg(msg.appendSpace().append(it.name().color(Defaults.YELLOW)).append(Component.text(" by ").append(Component.text("$amount").color(Defaults.YELLOW)))))
+                sender.sendMessage(Defaults.success(msg.appendSpace().append(it.name().color(Defaults.YELLOW)).append(Component.text(" by ").append(Component.text("$amount").color(Defaults.YELLOW)))))
                 msg = msg.append(Component.text(" (by ").append(sender.name().color(Defaults.YELLOW)).append(Component.text(")")))
             }
 
-            it.sendMessage(Defaults.msg(msg))
+            it.sendMessage(Defaults.success(msg))
         }
     }
 }

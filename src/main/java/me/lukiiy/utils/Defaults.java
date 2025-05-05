@@ -41,13 +41,25 @@ public class Defaults {
 
     // Messages
 
-    public static Component msg(@NotNull Component text) {return PREFIX.appendSpace().append(text.color(GRAY));}
-    public static Component fail(@NotNull Component text) {return PREFIX.appendSpace().append(FAIL_PREFIX).appendSpace().append(text.color(GRAY));}
+    public static Component success(@NotNull Component text) {
+        return PREFIX.appendSpace().append(text.color(GRAY));
+    }
+
+    public static Component fail(@NotNull Component text) {
+        return PREFIX.appendSpace().append(FAIL_PREFIX).appendSpace().append(text.color(GRAY));
+    }
 
     // Command stuff
-    public static CommandSyntaxException CmdException(@NotNull Component what) {return new SimpleCommandExceptionType(MessageComponentSerializer.message().serialize(fail(what))).create();}
-    public static final CommandSyntaxException NOT_FOUND = CmdException(Component.translatable("argument.entity.notfound.player", "No player was found"));
+    public static CommandSyntaxException CmdException(@NotNull Component what) {
+        return new SimpleCommandExceptionType(MessageComponentSerializer.message().serialize(fail(what))).create();
+    }
+
+    public static final CommandSyntaxException NOT_FOUND = CmdException(Component.translatable("argument.entity.notfound.player"));
     public static final CommandSyntaxException NON_PLAYER = CmdException(Component.text("This command can only be used by in-game players."));
+
+    public static String getPermission(String command) {
+        return "lukitils." + command.toLowerCase();
+    }
 
     // Joins
     public static final JoinConfiguration DEF_SEPARATOR = JoinConfiguration.builder().separator(Component.text(',')).lastSeparator(Component.text(" and ")).build();

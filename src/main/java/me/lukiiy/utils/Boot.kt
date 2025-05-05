@@ -28,6 +28,7 @@ class Boot : PluginBootstrap {
                 register(Ignite.register(), "Sets selected players on fire", listOf("burn"))
                 register(PlayerData.registerOnline(), "Shows player data from online users", listOf("playerinfo"))
                 register(PlayerData.registerOffline(), "Shows player data from offline users", listOf("offplayerinfo"))
+                register(Reload.register(), "Reloads Lukitils' config...")
             }
         }
     }

@@ -12,22 +12,21 @@ import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.entity.Player
 
 object Ping {
-    fun register(): LiteralCommandNode<CommandSourceStack> {
-        return Commands.literal("ping")
-            .then(Commands.argument("player", ArgumentTypes.player())
-                .executes {
-                    val sender = it.source.sender
-                    val target = it.getArgument("player", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().findFirst().orElse(null) ?: throw Defaults.NOT_FOUND
-
-                    sender.sendMessage(Defaults.msg(target.name().append(Component.text("'s ping is ").append(Component.text(target.ping).color(Defaults.PURPLE).decorate(TextDecoration.UNDERLINED)).append(Component.text(" ms")))))
-                    Command.SINGLE_SUCCESS
-                })
+    private val main = Commands.literal("ping")
+        .then(Commands.argument("player", ArgumentTypes.player())
             .executes {
-                val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
+                val sender = it.source.sender
+                val target = it.getArgument("player", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().findFirst().orElse(null) ?: throw Defaults.NOT_FOUND
 
-                sender.sendMessage(Defaults.msg(Component.text("Your ping is ").append(Component.text(sender.ping).color(Defaults.PURPLE).decorate(TextDecoration.UNDERLINED)).append(Component.text("ms"))))
+                sender.sendMessage(Defaults.success(target.name().append(Component.text("'s ping is ").append(Component.text(target.ping).color(Defaults.PURPLE).decorate(TextDecoration.UNDERLINED)).append(Component.text(" ms")))))
                 Command.SINGLE_SUCCESS
-            }
-        .build()
-    }
+            })
+        .executes {
+            val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
+
+            sender.sendMessage(Defaults.success(Component.text("Your ping is ").append(Component.text(sender.ping).color(Defaults.PURPLE).decorate(TextDecoration.UNDERLINED)).append(Component.text("ms"))))
+            Command.SINGLE_SUCCESS
+        }
+
+    fun register(): LiteralCommandNode<CommandSourceStack> = main.build()
 }

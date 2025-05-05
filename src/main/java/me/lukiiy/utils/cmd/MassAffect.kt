@@ -15,8 +15,10 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import io.papermc.paper.command.brigadier.argument.CustomArgumentType
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
-import me.lukiiy.utils.help.MessageUtils
-import me.lukiiy.utils.help.PlayerUtils
+import me.lukiiy.utils.help.Utils
+import me.lukiiy.utils.help.Utils.addScalarTransientMod
+import me.lukiiy.utils.help.Utils.asPermission
+import me.lukiiy.utils.help.Utils.group
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.title.Title
@@ -30,7 +32,7 @@ import java.util.concurrent.CompletableFuture
 object MassAffect {
     fun register(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("massaffect")
-            .requires { it.sender.hasPermission("lukitils.massaffect") }
+            .requires { it.sender.hasPermission("massaffect".asPermission()) }
             .then(Commands.argument("players", ArgumentTypes.players())
             .then(Commands.argument("effect", EffectArgument())
                 .then(Commands.argument("intensity", DoubleArgumentType.doubleArg(0.0))
@@ -51,10 +53,12 @@ object MassAffect {
 
     private fun handle(sender: CommandSender, targets: List<Player>, effect: Effect, intensity: Double) {
         targets.forEach { effect.act(it, intensity) }
+
         var msg = "Applying ${effect.name}${if (intensity != 1.0) " with intensity $intensity" else ""} to "
         if (intensity == 0.0) msg = "Reverting ${effect.name}'s changes for "
-        MessageUtils.adminCmdFeedback(sender, "Massaffected ${PlayerUtils.group(targets)} with ${effect.name}")
-        sender.sendMessage(Defaults.msg(Component.text(msg).append(PlayerUtils.group(targets, Style.style(Defaults.YELLOW)))))
+
+        Utils.adminCmdFeedback(sender, "Massaffected ${targets.group()} with ${effect.name}")
+        sender.sendMessage(Defaults.success(Component.text(msg).append(targets.group(Style.style(Defaults.YELLOW)))))
     }
 
     private enum class Effect(val act: (Player, Double) -> Unit, val desc: String) {
@@ -73,25 +77,25 @@ object MassAffect {
             val key = "sizeMod"
             val scale: Double = 1.0 * mult
 
-            PlayerUtils.applyMultipTransientAttribute(p, Attribute.SCALE, key, scale)
-            PlayerUtils.applyMultipTransientAttribute(p, Attribute.STEP_HEIGHT, key, scale)
-            PlayerUtils.applyMultipTransientAttribute(p, Attribute.BLOCK_INTERACTION_RANGE, key, scale)
-            PlayerUtils.applyMultipTransientAttribute(p, Attribute.ENTITY_INTERACTION_RANGE, key, scale)
-            PlayerUtils.applyMultipTransientAttribute(p, Attribute.SAFE_FALL_DISTANCE, key, if (mult > 0) scale/4 + 1 else 0.0)
+            p.addScalarTransientMod(key, Attribute.SCALE, scale)
+            p.addScalarTransientMod(key, Attribute.STEP_HEIGHT, scale)
+            p.addScalarTransientMod(key, Attribute.BLOCK_INTERACTION_RANGE, scale)
+            p.addScalarTransientMod(key, Attribute.ENTITY_INTERACTION_RANGE, scale)
+            p.addScalarTransientMod(key, Attribute.SAFE_FALL_DISTANCE, if (mult > 0) scale/4 + 1 else 0.0)
         }, "Changes the size of the players"),
         LOWGRAVITY({ p, mult ->
             val key = "lowGravity"
             val scale: Double = -0.8 * mult
 
-            PlayerUtils.applyMultipTransientAttribute(p, Attribute.GRAVITY, key, scale)
-            PlayerUtils.applyMultipTransientAttribute(p, Attribute.SAFE_FALL_DISTANCE, key, if (mult > 0) scale + 4 else 0.0)
+            p.addScalarTransientMod(key, Attribute.GRAVITY, scale)
+            p.addScalarTransientMod(key, Attribute.SAFE_FALL_DISTANCE, if (mult > 0) scale + 4 else 0.0)
         }, "Reduces the gravity..."),
         LONGARMS({ p, mult ->
             val key = "longArms"
             val scale: Double = 2.0 * mult
 
-            PlayerUtils.applyMultipTransientAttribute(p, Attribute.BLOCK_INTERACTION_RANGE, key, scale)
-            PlayerUtils.applyMultipTransientAttribute(p, Attribute.ENTITY_INTERACTION_RANGE, key, scale)
+            p.addScalarTransientMod(key, Attribute.BLOCK_INTERACTION_RANGE, scale)
+            p.addScalarTransientMod(key, Attribute.ENTITY_INTERACTION_RANGE, scale)
         }, "Increases the reach")
     }
 

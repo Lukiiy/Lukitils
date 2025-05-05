@@ -8,8 +8,9 @@ import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
-import me.lukiiy.utils.help.MessageUtils
-import me.lukiiy.utils.help.PlayerUtils
+import me.lukiiy.utils.help.Utils.asPermission
+import me.lukiiy.utils.help.Utils.getSpawn
+import me.lukiiy.utils.help.Utils.toComponent
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
 import org.bukkit.Bukkit
@@ -25,9 +26,11 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 object PlayerData {
+    private val req: (CommandSender) -> Boolean = { it.hasPermission("playerdata".asPermission()) }
+
     fun registerOnline(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("playerdata")
-            .requires { it.sender.hasPermission("lukitils.playerdata") }
+            .requires { req(it.sender) }
             .then(Commands.argument("player", ArgumentTypes.player())
                 .executes {
                     val sender = it.source.sender
@@ -47,7 +50,7 @@ object PlayerData {
 
     fun registerOffline(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("offplayerdata")
-            .requires { it.sender.hasPermission("lukitils.playerdata") }
+            .requires { req(it.sender) }
             .then(Commands.argument("offline_player", StringArgumentType.string())
                 .executes {
                     val sender = it.source.sender
@@ -59,7 +62,7 @@ object PlayerData {
             .build()
     }
 
-    private fun fancyData(title: String, value: Any): TextComponent {return Component.text("$title: ").append(Component.text(value.toString()).color(Defaults.ORANGE))}
+    private fun fancyData(title: String, value: Any): TextComponent = Component.text("$title: ").append(Component.text(value.toString()).color(Defaults.ORANGE))
 
     private fun handle(sender: CommandSender, target: Player) {
         val basic = listOfNotNull(
@@ -77,10 +80,10 @@ object PlayerData {
         )
 
         val locations = listOfNotNull(
-            Component.text("Current: ").append(MessageUtils.coolLocation(target.location).color(Defaults.ORANGE)),
-            Component.text("Spawn: ").append(MessageUtils.coolLocation(PlayerUtils.getSpawn(target)).color(Defaults.ORANGE)),
-            if (target.compassTarget != PlayerUtils.getSpawn(target)) Component.text("Compass: ").append(MessageUtils.coolLocation(target.compassTarget).color(Defaults.ORANGE)) else null,
-            target.lastDeathLocation?.let { Component.text("Last death: ").append(MessageUtils.coolLocation(it).color(Defaults.ORANGE)) }
+            Component.text("Current: ").append(target.location.toComponent().color(Defaults.ORANGE)),
+            Component.text("Spawn: ").append(target.getSpawn().toComponent().color(Defaults.ORANGE)),
+            if (target.compassTarget != target.getSpawn()) Component.text("Compass: ").append(target.compassTarget.toComponent().color(Defaults.ORANGE)) else null,
+            target.lastDeathLocation?.let { Component.text("Last death: ").append(it.toComponent().color(Defaults.ORANGE)) }
         )
 
         val everything = target.name().color(Defaults.YELLOW)
@@ -89,7 +92,7 @@ object PlayerData {
             .let { if (flags.isNotEmpty()) { it.append(Defaults.LIST_PREFIX).append(fancyData("Enabled flags", flags.joinToString(", "))).appendNewline().appendNewline() } else it }
             .append(Component.join(Defaults.LIST_LIKE, locations)).appendNewline()
 
-        sender.sendMessage(Defaults.msg(Component.text("Showing ").append(everything)))
+        sender.sendMessage(Defaults.success(Component.text("Showing ").append(everything)))
     }
 
     fun formatDateData(millis: Long): String {
@@ -118,6 +121,6 @@ object PlayerData {
             .append(Component.text("'s Offline Info").color(Defaults.GRAY)).appendNewline().appendNewline()
             .append(Component.join(Defaults.LIST_LIKE, time)).appendNewline()
 
-        sender.sendMessage(Defaults.msg(Component.text("Showing ").append(everything)))
+        sender.sendMessage(Defaults.success(Component.text("Showing ").append(everything)))
     }
 }

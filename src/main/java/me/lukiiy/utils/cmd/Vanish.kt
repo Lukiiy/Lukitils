@@ -9,6 +9,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.Lukitils
+import me.lukiiy.utils.help.Utils.asPermission
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickEvent
 import org.bukkit.Bukkit
@@ -23,13 +24,13 @@ import org.bukkit.event.player.PlayerQuitEvent
 import java.util.*
 
 object Vanish : Listener {
-    private val permission = "lukiyils.vanish"
+    private val req: (CommandSender) -> Boolean = { it.hasPermission("vanish".asPermission()) }
     private val vanished = mutableSetOf<UUID>()
     fun getVanished(): Set<UUID> = vanished
 
     fun registerMain(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("vanish")
-            .requires { it.sender.hasPermission(permission) }
+            .requires { req(it.sender) }
             .then(Commands.argument("player", ArgumentTypes.player())
                 .executes {
                     val sender = it.source.sender
@@ -49,7 +50,7 @@ object Vanish : Listener {
 
     private fun handle(sender: CommandSender, target: Player) {
         val isVanished = target.uniqueId in vanished
-        var message = Defaults.msg(Component.text("Vanish is now ").append(if (isVanished) Defaults.OFF else Defaults.ON))
+        var message = Defaults.success(Component.text("Vanish is now ").append(if (isVanished) Defaults.OFF else Defaults.ON))
 
         if (target != sender) {
             sender.sendMessage(message.append(Component.text(" for ").color(Defaults.GRAY)).append(target.name().color(Defaults.YELLOW)))
@@ -69,15 +70,15 @@ object Vanish : Listener {
 
     fun registerList(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("vanishlist")
-            .requires { it.sender.hasPermission(permission) }
+            .requires { req(it.sender) }
             .executes {
                 val sender = it.source.sender
                 if (vanished.isEmpty()) throw Defaults.CmdException(Component.text("No vanished players found"))
 
-                val players = vanished.mapNotNull { Bukkit.getPlayer(it)?.name() }
+                val players = vanished.mapNotNull { p -> Bukkit.getPlayer(p)?.name() }
                 if (players.isEmpty()) throw Defaults.CmdException(Component.text("No online vanished players found"))
 
-                sender.sendMessage(Defaults.msg(Component.text("Vanished players:").appendNewline().append(Component.join(Defaults.LIST_LIKE, players.map { it.color(Defaults.YELLOW) }))))
+                sender.sendMessage(Defaults.success(Component.text("Vanished players:").appendNewline().append(Component.join(Defaults.LIST_LIKE, players.map { c -> c.color(Defaults.YELLOW) }))))
                 Command.SINGLE_SUCCESS
             }
         .build()
@@ -92,12 +93,12 @@ object Vanish : Listener {
         if (vanished.contains(p.uniqueId)) {
             e.joinMessage(null)
             Bukkit.getOnlinePlayers().stream().filter { player: Player? -> player != p }.forEach { player: Player? -> player!!.hidePlayer(Lukitils.getInstance(), p) }
-            p.sendMessage(Defaults.msg(Component.text("You're still vanished!").clickEvent(ClickEvent.suggestCommand("/vanish"))))
+            p.sendMessage(Defaults.success(Component.text("You're still vanished!").clickEvent(ClickEvent.suggestCommand("/vanish"))))
         }
 
-        Bukkit.getScheduler().runTaskLater(Lukitils.getInstance(),
-            Runnable { vanished.stream().map { id -> Bukkit.getPlayer(id!!) }.filter { Objects.nonNull(it) }.forEach { player -> p.hidePlayer(Lukitils.getInstance(), player!!) } }, 2L
-        )
+        Bukkit.getGlobalRegionScheduler().run(Lukitils.getInstance()) { task ->
+            vanished.stream().map { id -> Bukkit.getPlayer(id!!) }.filter { Objects.nonNull(it) }.forEach { player -> p.hidePlayer(Lukitils.getInstance(), player!!) }
+        }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)

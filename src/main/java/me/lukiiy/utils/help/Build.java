@@ -3,35 +3,35 @@ package me.lukiiy.utils.help;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class Build {
-    public static Set<Block> getBlocks(Location pos1, Location pos2, Predicate<Block> filter) {
+    public static @NotNull Set<Block> getBlocks(@NotNull Location pos1, @NotNull Location pos2, @Nullable Predicate<Block> filter) {
         World world = pos1.getWorld();
+
         int minX = Math.min(pos1.getBlockX(), pos2.getBlockX());
         int minY = Math.min(pos1.getBlockY(), pos2.getBlockY());
         int minZ = Math.min(pos1.getBlockZ(), pos2.getBlockZ());
         int maxX = Math.max(pos1.getBlockX(), pos2.getBlockX());
         int maxY = Math.max(pos1.getBlockY(), pos2.getBlockY());
-        int maxZ = Math.max(pos1.getBlockZ(), pos2.getBlockZ());
+        int maxZ = Math.max(pos1.getBlockX(), pos2.getBlockX());
 
-        int max = (maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1);
-        Set<Block> blocks = new HashSet<>(max);
+        Stream<Block> stream = IntStream.rangeClosed(minX, maxX).boxed()
+                .flatMap(x -> IntStream.rangeClosed(minY, maxY).boxed()
+                        .flatMap(y -> IntStream.rangeClosed(minZ, maxZ)
+                                .mapToObj(z -> world.getBlockAt(x, y, z))));
 
-        for (int x = minX; x <= maxX; x++) {
-            for (int y = minY; y <= maxY; y++) {
-                for (int z = minZ; z <= maxZ; z++) {
-                    Block block = world.getBlockAt(x, y, z);
-                    if (filter.test(block)) blocks.add(block);
-                }
-            }
-        }
-
-        return blocks;
+        return stream.parallel().filter(filter == null ? b -> true : filter).collect(Collectors.toSet());
     }
 
-    public static Set<Block> getBlocks(Location pos1, Location pos2) {return getBlocks(pos1, pos2, b -> true);}
+    public static @NotNull Set<Block> getBlocks(@NotNull Location pos1, @NotNull Location pos2) {
+        return getBlocks(pos1, pos2, null);
+    }
 }

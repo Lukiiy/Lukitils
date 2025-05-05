@@ -14,10 +14,10 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 
-@SuppressWarnings("deprecation")
 public class Toast {
     private static final Gson gson = new Gson();
 
+    @SuppressWarnings("deprecation")
     public static void display(String origin, List<Player> players, Style style, ItemStack item, Component title, boolean chatAnnounce) {
         NamespacedKey key = new NamespacedKey(Lukitils.getInstance(), origin + "-" + System.currentTimeMillis());
 
@@ -29,7 +29,7 @@ public class Toast {
 
         if (item.getItemMeta() != null) {
             JsonObject components = componentDataParser(item.getItemMeta().getAsComponentString());
-            if (components != null) {icon.add("components", components);}
+            if (components != null) icon.add("components", components);
         }
 
         display.add("icon", icon);
