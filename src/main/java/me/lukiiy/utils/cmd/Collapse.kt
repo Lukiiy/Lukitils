@@ -60,6 +60,7 @@ object Collapse {
         }
 
         Utils.adminCmdFeedback(player, "Collapsed ${blocks.size} blocks")
-        player.sendMessage(Defaults.success("Collapsing ${blocks.size} blocks...".asFancyString()))
+        player.sendMessage(Defaults.neutral("Collapsing ${blocks.size} blocks...".asFancyString()))
+
     }
 }

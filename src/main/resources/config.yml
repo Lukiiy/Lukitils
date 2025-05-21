@@ -1,2 +1,3 @@
 # Toggles admin feedback (says who executed a command) for the plugin's commands
 commandFeedback: true
+yes: true

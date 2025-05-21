@@ -41,7 +41,7 @@ public class Defaults {
 
     // Messages
 
-    public static Component success(@NotNull Component text) {
+    public static Component neutral(@NotNull Component text) {
         return PREFIX.appendSpace().append(text.color(GRAY));
     }
 

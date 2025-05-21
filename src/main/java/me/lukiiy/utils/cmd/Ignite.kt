@@ -24,7 +24,7 @@ object Ignite {
                     val durationTicks = IntegerArgumentType.getInteger(it, "time")
 
                     targets.forEach { p -> p.fireTicks = durationTicks }
-                    sender.sendMessage(Defaults.success(Component.text("Set ").append(targets.group(Style.style(Defaults.YELLOW))).append(Component.text(" on fire for ").append(Component.text(durationTicks * 20).color(Defaults.YELLOW)).append(Component.text(" seconds.")))))
+                    sender.sendMessage(Defaults.neutral(Component.text("Set ").append(targets.group(Style.style(Defaults.YELLOW))).append(Component.text(" on fire for ").append(Component.text(durationTicks * 20).color(Defaults.YELLOW)).append(Component.text(" seconds.")))))
                     Command.SINGLE_SUCCESS
                 }))
 

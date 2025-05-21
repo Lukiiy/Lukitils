@@ -6,9 +6,9 @@ import com.mojang.brigadier.tree.LiteralCommandNode
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
-import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.help.Utils.asPermission
+import me.lukiiy.utils.help.Utils.getPlayerOrThrow
 import me.lukiiy.utils.help.Utils.getSpawn
 import me.lukiiy.utils.help.Utils.toComponent
 import net.kyori.adventure.text.Component
@@ -34,7 +34,7 @@ object PlayerData {
             .then(Commands.argument("player", ArgumentTypes.player())
                 .executes {
                     val sender = it.source.sender
-                    val target = it.getArgument("player", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().findFirst().orElse(null) ?: return@executes 0
+                    val target = it.getPlayerOrThrow("player")
 
                     handle(sender, target)
                     Command.SINGLE_SUCCESS
@@ -92,7 +92,7 @@ object PlayerData {
             .let { if (flags.isNotEmpty()) { it.append(Defaults.LIST_PREFIX).append(fancyData("Enabled flags", flags.joinToString(", "))).appendNewline().appendNewline() } else it }
             .append(Component.join(Defaults.LIST_LIKE, locations)).appendNewline()
 
-        sender.sendMessage(Defaults.success(Component.text("Showing ").append(everything)))
+        sender.sendMessage(Defaults.neutral(Component.text("Showing ").append(everything)))
     }
 
     fun formatDateData(millis: Long): String {
@@ -121,6 +121,6 @@ object PlayerData {
             .append(Component.text("'s Offline Info").color(Defaults.GRAY)).appendNewline().appendNewline()
             .append(Component.join(Defaults.LIST_LIKE, time)).appendNewline()
 
-        sender.sendMessage(Defaults.success(Component.text("Showing ").append(everything)))
+        sender.sendMessage(Defaults.neutral(Component.text("Showing ").append(everything)))
     }
 }

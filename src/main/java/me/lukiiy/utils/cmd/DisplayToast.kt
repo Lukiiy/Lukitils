@@ -23,7 +23,7 @@ import org.bukkit.inventory.ItemStack
 object DisplayToast {
     private val main = Commands.literal("displaytoast")
         .requires { it.sender.hasPermission("displaytoast".asPermission()) }
-        .then(Commands.argument("player", ArgumentTypes.players())
+        .then(Commands.argument("players", ArgumentTypes.players())
             .then(Commands.argument("style", StringArgumentType.word())
                 .suggests { _, builder ->
                     val input = builder.remaining.uppercase()
@@ -51,7 +51,7 @@ object DisplayToast {
         val chatAnnounce = msg.contains(" -c")
 
         Utils.adminCmdFeedback(sender, "Displyed a toast to ${targets.group()}")
-        sender.sendMessage(Defaults.success("Displaying a toast to ${targets.group(Style.style(Defaults.YELLOW)).hoverEvent(HoverEvent.showText(Component.join(Defaults.DEF_SEPARATOR, targets.stream().map(Player::name).toList())))}".asFancyString()))
+        sender.sendMessage(Defaults.neutral("Displaying a toast to ${targets.group(Style.style(Defaults.YELLOW)).hoverEvent(HoverEvent.showText(Component.join(Defaults.DEF_SEPARATOR, targets.stream().map(Player::name).toList())))}".asFancyString()))
         Toast.display(sender.name, targets, style, item, Defaults.FancyString.deserialize(msg.replace(" -c", "")), chatAnnounce)
     }
 }

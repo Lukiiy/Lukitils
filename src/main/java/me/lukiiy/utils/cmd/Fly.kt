@@ -5,10 +5,10 @@ import com.mojang.brigadier.tree.LiteralCommandNode
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
-import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.help.Utils
 import me.lukiiy.utils.help.Utils.asPermission
+import me.lukiiy.utils.help.Utils.getPlayerOrThrow
 import net.kyori.adventure.text.Component
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -18,7 +18,7 @@ object Fly {
         .requires { it.sender.hasPermission("fly".asPermission()) }
         .then(Commands.argument("player", ArgumentTypes.player())
             .executes {
-                val target = it.getArgument("player", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().findFirst().orElse(null) ?: return@executes 0
+                val target = it.getPlayerOrThrow("player")
 
                 handle(it.source.sender, target)
                 Command.SINGLE_SUCCESS
@@ -34,7 +34,7 @@ object Fly {
 
     private fun handle(sender: CommandSender, target: Player) {
         val update = !target.allowFlight
-        val msg = Defaults.success(Component.text("Flight is now ")).append(if (update) Defaults.ON else Defaults.OFF)
+        val msg = Defaults.neutral(Component.text("Flight is now ")).append(if (update) Defaults.ON else Defaults.OFF)
         var adminMsgExtra = ""
 
         target.allowFlight = update

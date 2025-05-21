@@ -13,8 +13,7 @@ object Reload {
     private val main = Commands.literal("lukitils")
         .requires { it.sender.hasPermission("reload".asPermission()) }
         .executes {
-            val sender = it.source.sender
-            sender.sendMessage(Defaults.success("Reload config...".asFancyString()))
+            it.source.sender.sendMessage(Defaults.neutral("Reload config...".asFancyString()))
             Lukitils.getInstance().reloadConfig()
             Command.SINGLE_SUCCESS
         }

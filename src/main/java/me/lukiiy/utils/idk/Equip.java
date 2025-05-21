@@ -47,6 +47,7 @@ public class Equip implements Listener { // todo
     public static void removeFromWatch(Player player) {
         EquipView view = tracker.remove(player);
         if (view == null) return;
+
         view.getViewers().forEach(p -> {
             if (isWatching(p)) p.closeInventory();
         });
@@ -66,6 +67,7 @@ public class Equip implements Listener { // todo
     public void equipmentDmg(PlayerItemDamageEvent e) {
         Player p = e.getPlayer();
         if (!isBeingWatched(p)) return;
+
         ItemStack item = e.getItem();
         if (item.isEmpty() || item.getItemMeta().isUnbreakable()) return;
         updateWatchers(p);
@@ -74,6 +76,7 @@ public class Equip implements Listener { // todo
     @EventHandler
     public void quit(PlayerQuitEvent e) {
         Player p = e.getPlayer();
+
         if (isBeingWatched(p)) removeFromWatch(p);
         if (isWatching(p)) removeViewer(p);
     }
@@ -81,6 +84,7 @@ public class Equip implements Listener { // todo
     @EventHandler
     public void invClose(InventoryCloseEvent e) {
         Player p = (Player) e.getPlayer();
+
         if (isBeingWatched(p)) removeFromWatch(p);
         if (isWatching(p)) removeViewer(p);
     }

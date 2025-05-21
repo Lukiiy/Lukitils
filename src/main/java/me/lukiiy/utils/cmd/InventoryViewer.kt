@@ -72,7 +72,7 @@ object InventoryViewer : Listener {
     }
 
     private fun handle(sender: Player, target: Player, act: (Player, Player) -> Unit, actDesc: String) {
-        sender.sendMessage(Defaults.success(Component.text("Inspecting ").append(target.name().color(Defaults.YELLOW)).append(Component.text("'s $actDesc"))))
+        sender.sendMessage(Defaults.neutral(Component.text("Inspecting ").append(target.name().color(Defaults.YELLOW)).append(Component.text("'s $actDesc"))))
         act(sender, target)
     }
 }

@@ -5,23 +5,23 @@ import com.mojang.brigadier.tree.LiteralCommandNode
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
-import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.help.Utils.asPermission
+import me.lukiiy.utils.help.Utils.getPlayerOrThrow
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.HoverEvent
 import org.bukkit.Chunk
 import org.bukkit.entity.Player
 
 object SlimeChunk {
-    private val defMsg: Component = Defaults.success(Component.text("[a] in a slime chunk."))
+    private val defMsg: Component = Defaults.neutral(Component.text("[a] in a slime chunk."))
 
     val main = Commands.literal("slimechunk")
         .requires { it.sender.hasPermission("slimechunk".asPermission()) }
         .then(Commands.argument("player", ArgumentTypes.player())
             .executes {
                 val sender = it.source.sender
-                val target = it.getArgument("player", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().findFirst().orElse(null) ?: return@executes 0
+                val target = it.getPlayerOrThrow("player")
                 val state = if (target.chunk.isSlimeChunk) Component.text("is").color(Defaults.GREEN) else Component.text("isn't").color(Defaults.RED)
 
                 sender.sendMessage(defMsg.replaceText {i -> i.matchLiteral("[a]").replacement(target.name().color(Defaults.YELLOW).appendSpace().append(state)).build() })

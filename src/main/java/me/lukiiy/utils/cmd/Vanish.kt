@@ -6,10 +6,10 @@ import com.mojang.brigadier.tree.LiteralCommandNode
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
-import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.Lukitils
 import me.lukiiy.utils.help.Utils.asPermission
+import me.lukiiy.utils.help.Utils.getPlayerOrThrow
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickEvent
 import org.bukkit.Bukkit
@@ -26,6 +26,7 @@ import java.util.*
 object Vanish : Listener {
     private val req: (CommandSender) -> Boolean = { it.hasPermission("vanish".asPermission()) }
     private val vanished = mutableSetOf<UUID>()
+
     fun getVanished(): Set<UUID> = vanished
 
     fun registerMain(): LiteralCommandNode<CommandSourceStack> {
@@ -34,7 +35,7 @@ object Vanish : Listener {
             .then(Commands.argument("player", ArgumentTypes.player())
                 .executes {
                     val sender = it.source.sender
-                    val target = it.getArgument("player", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().findFirst().orElse(null) ?: return@executes 0
+                    val target = it.getPlayerOrThrow("player")
 
                     handle(sender, target)
                     Command.SINGLE_SUCCESS
@@ -50,7 +51,7 @@ object Vanish : Listener {
 
     private fun handle(sender: CommandSender, target: Player) {
         val isVanished = target.uniqueId in vanished
-        var message = Defaults.success(Component.text("Vanish is now ").append(if (isVanished) Defaults.OFF else Defaults.ON))
+        var message = Defaults.neutral(Component.text("Vanish is now ").append(if (isVanished) Defaults.OFF else Defaults.ON))
 
         if (target != sender) {
             sender.sendMessage(message.append(Component.text(" for ").color(Defaults.GRAY)).append(target.name().color(Defaults.YELLOW)))
@@ -78,7 +79,7 @@ object Vanish : Listener {
                 val players = vanished.mapNotNull { p -> Bukkit.getPlayer(p)?.name() }
                 if (players.isEmpty()) throw Defaults.CmdException(Component.text("No online vanished players found"))
 
-                sender.sendMessage(Defaults.success(Component.text("Vanished players:").appendNewline().append(Component.join(Defaults.LIST_LIKE, players.map { c -> c.color(Defaults.YELLOW) }))))
+                sender.sendMessage(Defaults.neutral(Component.text("Vanished players:").appendNewline().append(Component.join(Defaults.LIST_LIKE, players.map { c -> c.color(Defaults.YELLOW) }))))
                 Command.SINGLE_SUCCESS
             }
         .build()
@@ -93,7 +94,7 @@ object Vanish : Listener {
         if (vanished.contains(p.uniqueId)) {
             e.joinMessage(null)
             Bukkit.getOnlinePlayers().stream().filter { player: Player? -> player != p }.forEach { player: Player? -> player!!.hidePlayer(Lukitils.getInstance(), p) }
-            p.sendMessage(Defaults.success(Component.text("You're still vanished!").clickEvent(ClickEvent.suggestCommand("/vanish"))))
+            p.sendMessage(Defaults.neutral(Component.text("You're still vanished!").clickEvent(ClickEvent.suggestCommand("/vanish"))))
         }
 
         Bukkit.getGlobalRegionScheduler().run(Lukitils.getInstance()) { task ->

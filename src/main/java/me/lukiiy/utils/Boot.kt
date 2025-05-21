@@ -29,6 +29,7 @@ class Boot : PluginBootstrap {
                 register(PlayerData.registerOnline(), "Shows player data from online users", listOf("playerinfo"))
                 register(PlayerData.registerOffline(), "Shows player data from offline users", listOf("offplayerinfo"))
                 register(Reload.register(), "Reloads Lukitils' config...")
+                register(QuickThrow.register(), "Quick throws an entity")
             }
         }
     }
