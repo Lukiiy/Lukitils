@@ -14,7 +14,7 @@ class Boot : PluginBootstrap {
                 register(Invulnerability.register(), "Toggles invulnerability state", listOf("god", "invul"))
                 register(SimpleStats.registerHeal(), "Heals a player")
                 register(SimpleStats.registerFeed(), "uh- feeds... a player?")
-                register(SimpleStats.registerBare(), "Sets selected players' hp and foodlevel to 1")
+                register(Barelife.register(), "Sets selected players' hp and foodlevel to 1")
                 register(DisplayToast.register(), "Displays a custom advancement toast to a player")
                 register(InventoryViewer.registerInv(), "View a player's inventory", listOf("openinv", "viewinv"))
                 register(InventoryViewer.registerEChest(), "View a player's ender chest", listOf("openechest", "viewechest"))

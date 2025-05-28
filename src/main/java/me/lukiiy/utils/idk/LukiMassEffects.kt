@@ -8,10 +8,15 @@ import me.lukiiy.utils.help.Utils.boundedScale
 import me.lukiiy.utils.help.Utils.removeTransientMod
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.title.Title
+import org.bukkit.Location
+import org.bukkit.Material
 import org.bukkit.Particle
+import org.bukkit.World
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
 import java.time.Duration
+
 
 object LukiMassEffects {
     private val DEMO: MassEffect = object : MassEffect {
@@ -125,6 +130,43 @@ object LukiMassEffects {
         override fun id() = "longarms"
     }
 
+    private val INVBOOM: MassEffect = object : MassEffect {
+        override fun apply(player: Player, intensity: Double) {
+            val force = intensity - 1
+
+            player.inventory.apply {
+                contents.filterNotNull().forEach {
+                    drop(player, it, force)
+                    it.amount = 0
+                }
+
+                armorContents.filterNotNull().forEach {
+                    drop(player, it, force)
+                    it.amount = 0
+                }
+
+                drop(player, itemInOffHand, force)
+                setItemInOffHand(null)
+            }
+
+            player.updateInventory()
+        }
+
+        fun drop(p: Player, i: ItemStack, d: Double) {
+            p.world.dropItemNaturally(p.location.add(0.0, 1.0, 1.0), i) {
+                it.apply {
+                    thrower = p.uniqueId
+                    pickupDelay = 60
+                    if (d > 0.0) velocity = velocity.multiply(d).setY(0)
+                }
+            }
+        }
+
+        override fun name() = "Inventory Explosion"
+        override fun description() = "Drops every item of a player"
+        override fun id() = "inventoryboom"
+    }
+
     fun init() {
         Lukitils.getInstance().apply {
             addMassEffect(DEMO)
@@ -134,6 +176,7 @@ object LukiMassEffects {
             addMassEffect(SIZEMOD)
             addMassEffect(LOWGRAVITY)
             addMassEffect(LONGARMS)
+            addMassEffect(INVBOOM)
         }
     }
 

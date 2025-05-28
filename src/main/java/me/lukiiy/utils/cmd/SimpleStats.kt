@@ -8,9 +8,13 @@ import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import me.lukiiy.utils.Defaults
+import me.lukiiy.utils.Lukitils
+import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
 import me.lukiiy.utils.help.Utils.getPlayersOrThrow
+import me.lukiiy.utils.help.Utils.group
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.Style
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.potion.PotionEffectType
@@ -31,14 +35,6 @@ object SimpleStats {
             foodLevel = foodLevel + a
             saturation = 5f
             exhaustion = 0f
-        }
-    }
-
-    private val bareUnit: (Player, Int) -> Unit = { t, _ ->
-        t.apply {
-            health = 1.0
-            foodLevel = 1
-            saturation = 0f
         }
     }
 
@@ -106,37 +102,12 @@ object SimpleStats {
         .build()
     }
 
-    fun registerBare(): LiteralCommandNode<CommandSourceStack> {
-        return Commands.literal("barelife")
-            .requires { req(it.sender) }
-            .then(Commands.argument("players", ArgumentTypes.players())
-                .executes {
-                    val targets = it.getPlayersOrThrow("players")
-
-                    handle(it.source.sender, targets, 1, bareUnit, "Barelifed")
-                    Command.SINGLE_SUCCESS
-                })
-            .executes {
-                val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
-
-                handle(sender, listOf(sender), 1, bareUnit, "Barelifed")
-                Command.SINGLE_SUCCESS
-            }
-            .build()
-    }
-
     private fun <T> handle(sender: CommandSender, targets: List<Player>, amount: T, act: (Player, T) -> Unit, actDesc: String) {
-        var msg = Component.text(actDesc)
-
         targets.forEach {
             act(it, amount)
-
-            if (it != sender) {
-                sender.sendMessage(Defaults.neutral(msg.appendSpace().append(it.name().color(Defaults.YELLOW)).append(Component.text(" by ").append(Component.text("$amount").color(Defaults.YELLOW)))))
-                msg = msg.append(Component.text(" (by ").append(sender.name().color(Defaults.YELLOW)).append(Component.text(")")))
-            }
-
-            it.sendMessage(Defaults.neutral(msg.append(Component.text(" by ")).append(Component.text("$amount").color(Defaults.YELLOW))))
+            if (!Lukitils.getInstance().config.getBoolean("silent_stats") && it != sender) it.sendMessage(Defaults.neutral("$actDesc by ".asFancyString().append(" (by ".asFancyString()).append(sender.name()).append(")".asFancyString())))
         }
+
+        sender.sendMessage(Defaults.neutral("$actDesc ".asFancyString().append(targets.group(Style.style(Defaults.YELLOW))).append(" by ".asFancyString()).append("$amount".asFancyString().color(Defaults.YELLOW))))
     }
 }

@@ -45,7 +45,7 @@ public final class Lukitils extends JavaPlugin {
     }
 
     public void addMassEffect(MassEffect effect) {
-        massEffects.put(effect.id(), effect);
+        massEffects.put(effect.id().toLowerCase(), effect);
     }
 
     @ApiStatus.Experimental

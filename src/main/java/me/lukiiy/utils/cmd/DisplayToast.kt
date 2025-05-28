@@ -12,6 +12,7 @@ import me.lukiiy.utils.help.Toast
 import me.lukiiy.utils.help.Utils
 import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
+import me.lukiiy.utils.help.Utils.getPlayersOrThrow
 import me.lukiiy.utils.help.Utils.group
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.HoverEvent
@@ -34,7 +35,7 @@ object DisplayToast {
                     .then(Commands.argument("message", StringArgumentType.greedyString())
                         .executes {
                             val sender = it.source.sender
-                            val target = it.getArgument("player", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().toList().takeIf {it.isNotEmpty()} ?: throw Defaults.NOT_FOUND
+                            val target = it.getPlayersOrThrow("players")
                             val style =
                                 try { Toast.Style.valueOf(StringArgumentType.getString(it, "style").uppercase()) }
                                 catch (_: IllegalArgumentException) { throw Defaults.CmdException(Component.text("Expected a valid style type.")) }
