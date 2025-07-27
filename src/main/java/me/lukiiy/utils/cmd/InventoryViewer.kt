@@ -15,11 +15,12 @@ import org.bukkit.entity.Player
 import org.bukkit.event.Listener
 
 object InventoryViewer : Listener {
-    private val req: (CommandSender) -> Boolean = { it.hasPermission("invsee".asPermission()) }
+    private val reqInvsee: (CommandSender) -> Boolean = { it.hasPermission("invsee".asPermission()) }
+    private val reqEChest: (CommandSender) -> Boolean = { it.hasPermission("echest".asPermission()) }
 
     fun registerInv(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("invsee")
-            .requires { req(it.sender) }
+            .requires { reqInvsee(it.sender) }
             .then(Commands.argument("player", ArgumentTypes.player())
             .executes {
                 val sender = it.source.sender as? Player ?: throw Defaults.NOT_FOUND
@@ -33,7 +34,7 @@ object InventoryViewer : Listener {
 
     fun registerEChest(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("echest")
-            .requires { req(it.sender) }
+            .requires { reqEChest(it.sender) }
             .then(Commands.argument("player", ArgumentTypes.player())
                 .executes {
                     val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
@@ -53,7 +54,7 @@ object InventoryViewer : Listener {
 
     fun registerEquip(): LiteralCommandNode<CommandSourceStack> {
         return Commands.literal("equipsee")
-            .requires { req(it.sender) }
+            .requires { reqInvsee(it.sender) }
             .then(Commands.argument("player", ArgumentTypes.player())
                 .executes {
                     val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
