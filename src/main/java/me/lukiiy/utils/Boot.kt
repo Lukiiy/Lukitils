@@ -26,8 +26,7 @@ class Boot : PluginBootstrap {
                 register(MassAffect.register(), "Applies various effects to selected players")
                 register(Collapse.register(), "Makes an area collapse!")
                 register(Ignite.register(), "Sets selected players on fire", listOf("burn"))
-                register(PlayerData.registerOnline(), "Shows player data from online users", listOf("playerinfo"))
-                register(PlayerData.registerOffline(), "Shows player data from offline users", listOf("offplayerinfo"))
+                register(PlayerData.register(), "Shows some player data from users", listOf("playerinfo"))
                 register(Reload.register(), "Reloads Lukitils' config...")
                 register(QuickThrow.register(), "Quick throws an entity")
             }

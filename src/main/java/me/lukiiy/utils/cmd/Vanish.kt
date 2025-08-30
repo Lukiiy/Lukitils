@@ -49,24 +49,32 @@ object Vanish : Listener {
         .build()
     }
 
-    private fun handle(sender: CommandSender, target: Player) {
+    fun toggle(target: Player): Boolean {
         val isVanished = target.uniqueId in vanished
-        var message = Defaults.neutral(Component.text("Vanish is now ").append(if (isVanished) Defaults.OFF else Defaults.ON))
+        val players = Bukkit.getOnlinePlayers().minus(target)
+
+        if (isVanished) {
+            players.forEach { it.showPlayer(Lukitils.getInstance(), target) }
+            vanished.remove(target.uniqueId)
+        } else {
+            players.forEach { it.hidePlayer(Lukitils.getInstance(), target) }
+            vanished.add(target.uniqueId)
+        }
+
+        target.isSleepingIgnored = !isVanished
+        return !isVanished
+    }
+
+    private fun handle(sender: CommandSender, target: Player) {
+        val vanish = toggle(target)
+        var message = Defaults.neutral(Component.text("Vanish is now ").append(if (vanish) Defaults.ON else Defaults.OFF))
 
         if (target != sender) {
             sender.sendMessage(message.append(Component.text(" for ").color(Defaults.GRAY)).append(target.name().color(Defaults.YELLOW)))
             message = message.append(Component.text(" (by ${sender.name})").color(Defaults.GRAY))
         }
 
-        if (!isVanished) {
-            Bukkit.getOnlinePlayers().minus(target).forEach { it.hidePlayer(Lukitils.getInstance(), target) }
-            vanished.add(target.uniqueId)
-        } else {
-            Bukkit.getOnlinePlayers().minus(target).forEach { it.showPlayer(Lukitils.getInstance(), target) }
-            vanished.remove(target.uniqueId)
-        }
-
-        target.sendMessage(message)
+        if (!Lukitils.getInstance().config.getBoolean("silentStats", true)) target.sendMessage(message)
     }
 
     fun registerList(): LiteralCommandNode<CommandSourceStack> {
@@ -97,7 +105,7 @@ object Vanish : Listener {
             p.sendMessage(Defaults.neutral(Component.text("You're still vanished!").clickEvent(ClickEvent.suggestCommand("/vanish"))))
         }
 
-        Bukkit.getGlobalRegionScheduler().run(Lukitils.getInstance()) { task ->
+        Bukkit.getGlobalRegionScheduler().run(Lukitils.getInstance()) { _ ->
             vanished.stream().map { id -> Bukkit.getPlayer(id!!) }.filter { Objects.nonNull(it) }.forEach { player -> p.hidePlayer(Lukitils.getInstance(), player!!) }
         }
     }

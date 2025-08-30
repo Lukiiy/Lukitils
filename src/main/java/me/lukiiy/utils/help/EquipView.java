@@ -2,13 +2,11 @@ package me.lukiiy.utils.help;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -27,11 +25,13 @@ public class EquipView implements InventoryHolder {
 
     public void load() {
         EntityEquipment equipment = p.getEquipment();
+
         inv.setItem(0, equipment.getHelmet());
         inv.setItem(1, equipment.getChestplate());
         inv.setItem(2, equipment.getLeggings());
         inv.setItem(3, equipment.getBoots());
-        inv.setItem(4, ItemStack.of(Material.BARRIER));
+        inv.setItem(4, equipment.getItemInOffHand());
+
         viewers.forEach(Player::updateInventory);
     }
 

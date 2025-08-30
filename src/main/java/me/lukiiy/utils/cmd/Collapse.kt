@@ -17,14 +17,14 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.BlockInventoryHolder
 
 object Collapse {
-    private const val detectionRange = 64
-    private val noBlock = Defaults.CmdException("Expected target within a distance of $detectionRange blocks.".asFancyString())
+    private const val DETECTION_RANGE = 128
+    private val noBlock = Defaults.CmdException("Expected target within a distance of $DETECTION_RANGE blocks.".asFancyString())
 
     private val main = Commands.literal("collapse")
         .requires { it.sender.hasPermission("collapse".asPermission()) }
         .executes {
             val sender = it.source.sender as? Player ?: throw Defaults.NOT_FOUND
-            val block = sender.getTargetBlockExact(detectionRange) ?: throw noBlock
+            val block = sender.getTargetBlockExact(DETECTION_RANGE) ?: throw noBlock
 
             handle(sender, block)
             Command.SINGLE_SUCCESS
@@ -32,7 +32,7 @@ object Collapse {
         .then(Commands.argument("radius", IntegerArgumentType.integer(1))
             .executes {
                 val sender = it.source.sender as? Player ?: throw Defaults.NOT_FOUND
-                val block = sender.getTargetBlockExact(detectionRange) ?: throw noBlock
+                val block = sender.getTargetBlockExact(DETECTION_RANGE) ?: throw noBlock
 
                 handle(sender, block, IntegerArgumentType.getInteger(it, "radius"))
                 Command.SINGLE_SUCCESS
@@ -40,7 +40,7 @@ object Collapse {
 
     fun register(): LiteralCommandNode<CommandSourceStack> = main.build()
 
-    private fun handle(player: Player, block: Block, area: Int = 3) {
+    fun handle(player: Player, block: Block, area: Int = 3) {
         val world = block.world
         val blocks = Build.getBlocks(block.location.add((-area).toDouble(), 0.0, (-area).toDouble()), block.location.add(area.toDouble(), (area * 2).toDouble(), area.toDouble())) { b -> !b.isEmpty && !b.isReplaceable }
 

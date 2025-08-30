@@ -3,19 +3,15 @@ package me.lukiiy.utils;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import io.papermc.paper.command.brigadier.MessageComponentSerializer;
+import me.lukiiy.lecour.Lecour;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 
 public class Defaults {
-    public static final MiniMessage FancyString = MiniMessage.builder()
-            .preProcessor(input -> MiniMessage.miniMessage().serialize(LegacyComponentSerializer.legacyAmpersand().deserialize(input)))
-            .tags(TagResolver.standard())
-            .build();
+    public static final MiniMessage FancyString = Lecour.MINI;
 
     // Colors
     public static final TextColor RED = TextColor.color(0xFF3854);

@@ -8,10 +8,7 @@ import me.lukiiy.utils.help.Utils.boundedScale
 import me.lukiiy.utils.help.Utils.removeTransientMod
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.title.Title
-import org.bukkit.Location
-import org.bukkit.Material
 import org.bukkit.Particle
-import org.bukkit.World
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -179,5 +176,4 @@ object LukiMassEffects {
             addMassEffect(INVBOOM)
         }
     }
-
 }

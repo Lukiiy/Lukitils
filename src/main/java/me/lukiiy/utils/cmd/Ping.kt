@@ -24,7 +24,7 @@ object Ping {
         .executes {
             val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
 
-            sender.sendMessage(Defaults.neutral(Component.text("Your ping is ").append(Component.text(sender.ping).color(Defaults.PURPLE).decorate(TextDecoration.UNDERLINED)).append(Component.text("ms"))))
+            sender.sendMessage(Defaults.neutral(Component.text("Your ping is ").append(Component.text(sender.ping).color(Defaults.PURPLE).decorate(TextDecoration.UNDERLINED)).append(Component.text(" ms"))))
             Command.SINGLE_SUCCESS
         }
 

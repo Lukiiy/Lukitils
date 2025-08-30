@@ -7,7 +7,6 @@ import me.lukiiy.utils.idk.Equip;
 import me.lukiiy.utils.idk.LukiMassEffects;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,7 +47,6 @@ public final class Lukitils extends JavaPlugin {
         massEffects.put(effect.id().toLowerCase(), effect);
     }
 
-    @ApiStatus.Experimental
     public void removeMassEffect(String id) {
         massEffects.remove(id);
     }

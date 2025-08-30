@@ -45,6 +45,6 @@ object QuickThrow {
         }
 
         Utils.adminCmdFeedback(sender, "Quick threw a $entityKey")
-        sender.sendMessage(Defaults.neutral("Quick throwing a ".asFancyString().append(Component.translatable(entityKey).color(Defaults.YELLOW)).append("with speed ".asFancyString()).append("$speed".asFancyString().color(Defaults.YELLOW))))
+        sender.sendMessage(Defaults.neutral("Quick throwing a ".asFancyString().append(Component.translatable(entityKey).color(Defaults.YELLOW)).append(" with speed ".asFancyString()).append("$speed".asFancyString().color(Defaults.YELLOW))))
     }
 }

@@ -18,12 +18,13 @@ import org.bukkit.inventory.ItemStack;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Equip implements Listener { // todo
+public class Equip implements Listener {
     private static final Map<Player, EquipView> tracker = new ConcurrentHashMap<>();
 
     public static EquipView getView(Player toView, Player first) {
         return tracker.computeIfAbsent(toView, p -> {
             EquipView view = new EquipView(p);
+
             view.addViewer(first);
             return view;
         });
@@ -36,10 +37,12 @@ public class Equip implements Listener { // todo
     public static void removeViewer(Player watcher) {
         tracker.values().removeIf(view -> {
             view.removeViewer(watcher);
+
             if (view.getViewers().isEmpty()) {
                 removeFromWatch(view.getPlayer());
                 return true;
             }
+
             return false;
         });
     }
@@ -59,6 +62,7 @@ public class Equip implements Listener { // todo
 
     public static void updateWatchers(Player player) {
         EquipView view = tracker.get(player);
+
         if (view != null) view.load();
     }
 
@@ -70,6 +74,7 @@ public class Equip implements Listener { // todo
 
         ItemStack item = e.getItem();
         if (item.isEmpty() || item.getItemMeta().isUnbreakable()) return;
+
         updateWatchers(p);
     }
 
@@ -92,6 +97,7 @@ public class Equip implements Listener { // todo
     @EventHandler(ignoreCancelled = true)
     public void armorChange(PlayerArmorChangeEvent e) {
         Player p = e.getPlayer();
+
         if (!isBeingWatched(p)) return;
         updateWatchers(p);
     }
@@ -99,7 +105,6 @@ public class Equip implements Listener { // todo
     @EventHandler(ignoreCancelled = true)
     public void invClick(InventoryClickEvent e) {
         Player p = (Player) e.getWhoClicked();
-
         Inventory inv = e.getClickedInventory();
         if (inv == null) return;
 
@@ -110,14 +115,11 @@ public class Equip implements Listener { // todo
             EntityEquipment equip = watched.getEquipment();
 
             switch (e.getSlot()) {
-                case 0 -> equip.setHelmet(e.getCursor());
-                case 1 -> equip.setChestplate(e.getCursor());
-                case 2 -> equip.setLeggings(e.getCursor());
-                case 3 -> equip.setBoots(e.getCursor());
-                default -> {
-                    e.setCancelled(true);
-                    return;
-                }
+                case 0 -> equip.setHelmet(e.getCursor(), true);
+                case 1 -> equip.setChestplate(e.getCursor(), true);
+                case 2 -> equip.setLeggings(e.getCursor(), true);
+                case 3 -> equip.setBoots(e.getCursor(), true);
+                case 4 -> equip.setItemInOffHand(e.getCursor(), true);
             }
 
             e.setCancelled(true);
@@ -131,10 +133,8 @@ public class Equip implements Listener { // todo
     @EventHandler(ignoreCancelled = true)
     public void invDrag(InventoryDragEvent e) {
         Player p = (Player) e.getWhoClicked();
-
         Inventory inv = e.getInventory();
-        if (isBeingWatched(p) && inv == p.getInventory()) updateWatchers(p);
 
-        if (inv.getHolder(false) instanceof EquipView) e.setCancelled(true);
+        if (isBeingWatched(p) && inv == p.getInventory()) updateWatchers(p);
     }
 }

@@ -9,12 +9,12 @@ import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.help.MassEffect
-import me.lukiiy.utils.help.MassEffectArgument
 import me.lukiiy.utils.help.Utils
 import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
 import me.lukiiy.utils.help.Utils.getPlayersOrThrow
 import me.lukiiy.utils.help.Utils.group
+import me.lukiiy.utils.idk.MassEffectArgument
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.Style
 import org.bukkit.command.CommandSender

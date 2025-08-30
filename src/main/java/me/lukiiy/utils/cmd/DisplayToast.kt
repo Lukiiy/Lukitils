@@ -6,7 +6,6 @@ import com.mojang.brigadier.tree.LiteralCommandNode
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
-import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.help.Toast
 import me.lukiiy.utils.help.Utils
@@ -14,8 +13,8 @@ import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
 import me.lukiiy.utils.help.Utils.getPlayersOrThrow
 import me.lukiiy.utils.help.Utils.group
+import me.lukiiy.utils.help.Utils.stripArgument
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.format.Style
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -28,6 +27,7 @@ object DisplayToast {
             .then(Commands.argument("style", StringArgumentType.word())
                 .suggests { _, builder ->
                     val input = builder.remaining.uppercase()
+
                     Toast.Style.entries.forEach { if (it.name.lowercase().startsWith(input.lowercase())) builder.suggest(it.name.lowercase()) }
                     builder.buildFuture()
                 }
@@ -36,6 +36,7 @@ object DisplayToast {
                         .executes {
                             val sender = it.source.sender
                             val target = it.getPlayersOrThrow("players")
+
                             val style =
                                 try { Toast.Style.valueOf(StringArgumentType.getString(it, "style").uppercase()) }
                                 catch (_: IllegalArgumentException) { throw Defaults.CmdException(Component.text("Expected a valid style type.")) }
@@ -43,16 +44,18 @@ object DisplayToast {
                             handle(sender, target, style, it.getArgument("item", ItemStack::class.java), StringArgumentType.getString(it, "message"))
                             Command.SINGLE_SUCCESS
                         }
-                    ))))
+                    )
+                )
+            )
+        )
 
     fun register(): LiteralCommandNode<CommandSourceStack> = main.build()
 
-    private fun handle(sender: CommandSender, targets: List<Player>, style: Toast.Style, item: ItemStack, message: String) {
-        val msg = message.replace("/n", "\n").replace("&", "§")
-        val chatAnnounce = msg.contains(" -c")
+    fun handle(sender: CommandSender, targets: List<Player>, style: Toast.Style, item: ItemStack, message: String) {
+        val (msg, chatAnnounce) = message.replace("/n", "\n").replace("&", "§").stripArgument("c")
 
         Utils.adminCmdFeedback(sender, "Displyed a toast to ${targets.group()}")
-        sender.sendMessage(Defaults.neutral("Displaying a toast to ${targets.group(Style.style(Defaults.YELLOW)).hoverEvent(HoverEvent.showText(Component.join(Defaults.DEF_SEPARATOR, targets.stream().map(Player::name).toList())))}".asFancyString()))
-        Toast.display(sender.name, targets, style, item, Defaults.FancyString.deserialize(msg.replace(" -c", "")), chatAnnounce)
+        sender.sendMessage(Defaults.neutral("Displaying a toast to ".asFancyString().append(targets.group(Style.style(Defaults.YELLOW)))))
+        Toast.display(sender.name, targets, style, item, Defaults.FancyString.deserialize(msg), chatAnnounce)
     }
 }

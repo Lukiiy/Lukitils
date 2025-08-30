@@ -1,4 +1,4 @@
-package me.lukiiy.utils.help;
+package me.lukiiy.utils.idk;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -10,7 +10,9 @@ import io.papermc.paper.command.brigadier.MessageComponentSerializer;
 import io.papermc.paper.command.brigadier.argument.CustomArgumentType;
 import me.lukiiy.utils.Defaults;
 import me.lukiiy.utils.Lukitils;
+import me.lukiiy.utils.help.MassEffect;
 import net.kyori.adventure.text.Component;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -19,19 +21,19 @@ public class MassEffectArgument implements CustomArgumentType.Converted<MassEffe
     private final CommandSyntaxException NOT_FOUND = Defaults.CmdException(Component.text("Effect \"$type\" doesn't exist."));
 
     @Override
-    public MassEffect convert(String nativeType) throws CommandSyntaxException {
+    public @NotNull MassEffect convert(@NotNull String nativeType) throws CommandSyntaxException {
         MassEffect m = Lukitils.getInstance().getMassEffects().get(nativeType);
         if (m == null) throw NOT_FOUND;
         return m;
     }
 
     @Override
-    public ArgumentType<String> getNativeType() {
+    public @NotNull ArgumentType<String> getNativeType() {
         return StringArgumentType.word();
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
+    public <S> @NotNull CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, SuggestionsBuilder builder) {
         Map<String, MassEffect> map = Lukitils.getInstance().getMassEffects();
         map.keySet().forEach(it -> {
             if (it.toLowerCase().startsWith(builder.getRemainingLowerCase())) {

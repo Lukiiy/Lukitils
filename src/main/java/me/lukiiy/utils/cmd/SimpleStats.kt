@@ -13,7 +13,6 @@ import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
 import me.lukiiy.utils.help.Utils.getPlayersOrThrow
 import me.lukiiy.utils.help.Utils.group
-import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.Style
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -32,7 +31,7 @@ object SimpleStats {
 
     private val feedUnit: (Player, Int) -> Unit = { t, a ->
         t.apply {
-            foodLevel = foodLevel + a
+            foodLevel += a
             saturation = 5f
             exhaustion = 0f
         }
@@ -105,7 +104,7 @@ object SimpleStats {
     private fun <T> handle(sender: CommandSender, targets: List<Player>, amount: T, act: (Player, T) -> Unit, actDesc: String) {
         targets.forEach {
             act(it, amount)
-            if (!Lukitils.getInstance().config.getBoolean("silent_stats") && it != sender) it.sendMessage(Defaults.neutral("$actDesc by ".asFancyString().append(" (by ".asFancyString()).append(sender.name()).append(")".asFancyString())))
+            if (!Lukitils.getInstance().config.getBoolean("silentStats", true) && it != sender) it.sendMessage(Defaults.neutral("$actDesc by ".asFancyString().append(" (by ".asFancyString()).append(sender.name()).append(")".asFancyString())))
         }
 
         sender.sendMessage(Defaults.neutral("$actDesc ".asFancyString().append(targets.group(Style.style(Defaults.YELLOW))).append(" by ".asFancyString()).append("$amount".asFancyString().color(Defaults.YELLOW))))

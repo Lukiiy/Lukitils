@@ -44,7 +44,18 @@ object Utils {
     @JvmStatic
     fun Location.toComponent(): Component {
         val coordString = "${this.blockX} ${this.blockY} ${this.blockZ}"
+
         return coordString.asFancyString().hoverEvent(HoverEvent.showText(Component.text("Click to Copy!").color(Defaults.YELLOW))).clickEvent(ClickEvent.copyToClipboard("/tp @s $coordString")).append(" @ ${this.world.name}".asFancyString())
+    }
+
+    @JvmStatic
+    fun String.stripArgument(argument: String): Pair<String, Boolean> {
+        val regex = Regex("(?<=^|\\s)-$argument(?=\\s|$)")
+
+        val removed = regex.containsMatchIn(this)
+        val modified = if (removed) regex.replace(this, "").replace(Regex("\\s+"), " ").trim() else this
+
+        return modified to removed
     }
 
     // Doubles Extensions!
@@ -86,4 +97,13 @@ object Utils {
 
     @JvmStatic
     fun CommandContext<CommandSourceStack>.getPlayersOrThrow(arg: String): List<Player> = getArgument(arg, PlayerSelectorArgumentResolver::class.java).resolve(source).stream().toList().takeIf { it.isNotEmpty() } ?: throw Defaults.NOT_FOUND
+
+    // Misc Extensions!
+    @JvmStatic
+    fun isFolia(): Boolean = try {
+        Class.forName("io.papermc.paper.threadedregions.RegionizedServer")
+        true
+    } catch (_: ClassNotFoundException) {
+        false
+    }
 }

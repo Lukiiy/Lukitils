@@ -5,3 +5,4 @@ api-version: '1.21'
 authors: [ Lukiiy ]
 description: Weird but useful plugin
 bootstrapper: me.lukiiy.utils.Boot
+folia-supported: true

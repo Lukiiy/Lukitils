@@ -1,5 +1,5 @@
 # Toggles admin feedback (says who executed a command) for the plugin's commands
 commandFeedback: true
 
-# Toggles some commands' feedback message (like /heal saying who healed)
-silent_stats: true
+# Toggles some commands' feedback message (like /heal saying who healed, /fly, /invulnerability, ...)
+silentStats: true

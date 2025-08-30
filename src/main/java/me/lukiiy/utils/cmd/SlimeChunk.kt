@@ -42,17 +42,17 @@ object SlimeChunk {
         val current = player.chunk
         val world = player.world
 
-        val slimeChunks = mutableListOf<Chunk>()
+        val chunks = mutableListOf<Chunk>()
 
         for (dx in -2..2) {
             for (dz in -2..2) {
                 if (dx == 0 && dz == 0) continue
 
                 val check = world.getChunkAt(current.x + dx, current.z + dz)
-                if (check.isSlimeChunk) slimeChunks.add(check)
+                if (check.isSlimeChunk) chunks.add(check)
             }
         }
 
-        return slimeChunks
+        return chunks
     }
 }
