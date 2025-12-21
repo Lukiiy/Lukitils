@@ -3,6 +3,7 @@ package me.lukiiy.utils.cmd
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.tree.LiteralCommandNode
+import com.viaversion.viaversion.api.Via
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.dialog.Dialog
@@ -123,7 +124,9 @@ object PlayerData {
             type(DialogType.notice())
         } }
 
-        if (sender is Player) sender.showDialog(dialog) else {
+        if (sender is Player && Via.getAPI().getPlayerVersion(sender) > 770) {
+            sender.showDialog(dialog)
+        } else {
             val everything = header.appendNewline().appendNewline()
                 .append(Component.join(Defaults.LIST_LIKE, basic)).appendNewline().appendNewline()
                 .let {

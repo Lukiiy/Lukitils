@@ -1,6 +1,7 @@
 package me.lukiiy.utils.help
 
 import com.mojang.brigadier.context.CommandContext
+import com.viaversion.viaversion.api.Via
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
@@ -15,6 +16,7 @@ import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.NamespacedKey
+import org.bukkit.World
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.command.CommandSender
@@ -49,6 +51,19 @@ object Utils {
     }
 
     @JvmStatic
+    fun Location.toComponentWithContext(origin: Location): Component { // Probably needs refactoring
+        val dim = when (this.world?.environment) {
+            World.Environment.NORMAL -> "overworld"
+            World.Environment.NETHER -> "the_nether"
+            World.Environment.THE_END -> "the_end"
+            else -> ""
+        }
+
+        val coords = "${this.blockX} ${this.blockY} ${this.blockZ}"
+        return coords.asFancyString().hoverEvent(HoverEvent.showText(Component.text("Click to suggest command!").color(Defaults.YELLOW))).clickEvent(ClickEvent.suggestCommand("/execute ${if (dim.isNotEmpty()) "in minecraft:$dim" else ""} run tp @s $coords")).append(" @ ${this.world.name}".asFancyString())
+    }
+
+    @JvmStatic
     fun String.stripArgument(argument: String): Pair<String, Boolean> {
         val regex = Regex("(?<=^|\\s)-$argument(?=\\s|$)")
 
@@ -77,6 +92,15 @@ object Utils {
     fun List<Player>.group(style: Style): Component {
         if (this.size == 1) return this.first().name()
         return Component.text(this.group()).style(style).hoverEvent(HoverEvent.showText(Component.join(JoinConfiguration.newlines(), this.stream().map { p -> p.name().style(style) }.toList())))
+    }
+
+    @JvmStatic
+    fun Player.getProtocol(): Int {
+        return try {
+            Via.getAPI().getPlayerVersion(this)
+        } catch (_: Exception) {
+            player!!.protocolVersion // wow.
+        }
     }
 
     @JvmStatic

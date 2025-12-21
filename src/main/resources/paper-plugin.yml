@@ -6,3 +6,7 @@ authors: [ Lukiiy ]
 description: Weird but useful plugin
 bootstrapper: me.lukiiy.utils.Boot
 folia-supported: true
+dependencies:
+  server:
+    ViaVersion:
+      required: false
