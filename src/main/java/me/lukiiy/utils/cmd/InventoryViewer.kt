@@ -8,6 +8,7 @@ import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.help.Utils.asPermission
+import me.lukiiy.utils.help.Utils.getPlayerOrThrow
 import me.lukiiy.utils.idk.Equip
 import net.kyori.adventure.text.Component
 import org.bukkit.command.CommandSender
@@ -24,7 +25,7 @@ object InventoryViewer : Listener {
             .then(Commands.argument("player", ArgumentTypes.player())
             .executes {
                 val sender = it.source.sender as? Player ?: throw Defaults.NOT_FOUND
-                val target = it.getArgument("player", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().findFirst().orElse(null) ?: throw Defaults.NOT_FOUND
+                val target = it.getPlayerOrThrow("player")
 
                 handle(sender, target, { sender, target -> sender.openInventory(target.inventory) }, "inventory")
                 Command.SINGLE_SUCCESS
@@ -38,7 +39,7 @@ object InventoryViewer : Listener {
             .then(Commands.argument("player", ArgumentTypes.player())
                 .executes {
                     val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
-                    val target = it.getArgument("player", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().findFirst().orElse(null) ?: throw Defaults.NOT_FOUND
+                    val target = it.getPlayerOrThrow("player")
 
                     handle(sender, target, {s, t -> s.openInventory(t.enderChest)}, "ender chest")
                     Command.SINGLE_SUCCESS
@@ -58,15 +59,15 @@ object InventoryViewer : Listener {
             .then(Commands.argument("player", ArgumentTypes.player())
                 .executes {
                     val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
-                    val target = it.getArgument("player", PlayerSelectorArgumentResolver::class.java).resolve(it.source).stream().findFirst().orElse(null) ?: throw Defaults.NOT_FOUND
+                    val target = it.getPlayerOrThrow("player")
 
-                    handle(sender, target, {s, t -> s.openInventory(Equip.getView(t, s)!!.inventory)}, "equipment")
+                    handle(sender, target, {s, t -> s.openInventory(Equip.getView(t, s).inventory)}, "equipment")
                     Command.SINGLE_SUCCESS
                 })
             .executes {
                 val sender = it.source.sender as? Player ?: throw Defaults.NOT_FOUND
 
-                handle(sender, sender, {s, t -> s.openInventory(Equip.getView(t, s)!!.inventory)}, "equipment")
+                handle(sender, sender, {s, t -> s.openInventory(Equip.getView(t, s).inventory)}, "equipment")
                 Command.SINGLE_SUCCESS
             }
         .build()

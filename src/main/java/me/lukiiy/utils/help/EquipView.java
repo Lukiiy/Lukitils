@@ -26,11 +26,11 @@ public class EquipView implements InventoryHolder {
     public void load() {
         EntityEquipment equipment = p.getEquipment();
 
-        inv.setItem(0, equipment.getHelmet());
-        inv.setItem(1, equipment.getChestplate());
-        inv.setItem(2, equipment.getLeggings());
-        inv.setItem(3, equipment.getBoots());
-        inv.setItem(4, equipment.getItemInOffHand());
+        inv.setItem(0, equipment.getHelmet().clone());
+        inv.setItem(1, equipment.getChestplate().clone());
+        inv.setItem(2, equipment.getLeggings().clone());
+        inv.setItem(3, equipment.getBoots().clone());
+        inv.setItem(4, equipment.getItemInOffHand().clone());
 
         viewers.forEach(Player::updateInventory);
     }

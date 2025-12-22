@@ -1,7 +1,9 @@
 package me.lukiiy.utils.idk;
 
 import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
+import me.lukiiy.utils.Lukitils;
 import me.lukiiy.utils.help.EquipView;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -15,19 +17,18 @@ import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Equip implements Listener {
-    private static final Map<Player, EquipView> tracker = new ConcurrentHashMap<>();
+    private static final Map<Player, EquipView> TRACKER = new ConcurrentHashMap<>();
 
-    public static EquipView getView(Player toView, Player first) {
-        return tracker.computeIfAbsent(toView, p -> {
-            EquipView view = new EquipView(p);
+    public static EquipView getView(Player target, Player viewer) {
+        EquipView view = TRACKER.computeIfAbsent(target, EquipView::new);
 
-            view.addViewer(first);
-            return view;
-        });
+        view.addViewer(viewer);
+        return view;
     }
 
     public static boolean isWatching(Player watcher) {
@@ -35,11 +36,11 @@ public class Equip implements Listener {
     }
 
     public static void removeViewer(Player watcher) {
-        tracker.values().removeIf(view -> {
+        TRACKER.values().removeIf(view -> {
             view.removeViewer(watcher);
 
             if (view.getViewers().isEmpty()) {
-                removeFromWatch(view.getPlayer());
+                removeViewer(view.getPlayer());
                 return true;
             }
 
@@ -47,94 +48,96 @@ public class Equip implements Listener {
         });
     }
 
-    public static void removeFromWatch(Player player) {
-        EquipView view = tracker.remove(player);
+    public static void stopWatching(Player target) {
+        EquipView view = TRACKER.remove(target);
         if (view == null) return;
 
-        view.getViewers().forEach(p -> {
-            if (isWatching(p)) p.closeInventory();
+        view.getViewers().forEach(viewer -> {
+            if (viewer.getOpenInventory().getTopInventory() == view.getInventory()) viewer.closeInventory();
         });
     }
 
-    public static boolean isBeingWatched(Player player) {
-        return tracker.containsKey(player);
+    public static boolean isBeingWatched(Player target) {
+        return TRACKER.containsKey(target);
     }
 
-    public static void updateWatchers(Player player) {
-        EquipView view = tracker.get(player);
+    public static void updateView(Player target) {
+        EquipView view = TRACKER.get(target);
 
         if (view != null) view.load();
-    }
-
-    // Listeners
-    @EventHandler(ignoreCancelled = true)
-    public void equipmentDmg(PlayerItemDamageEvent e) {
-        Player p = e.getPlayer();
-        if (!isBeingWatched(p)) return;
-
-        ItemStack item = e.getItem();
-        if (item.isEmpty() || item.getItemMeta().isUnbreakable()) return;
-
-        updateWatchers(p);
     }
 
     @EventHandler
     public void quit(PlayerQuitEvent e) {
         Player p = e.getPlayer();
 
-        if (isBeingWatched(p)) removeFromWatch(p);
+        if (isBeingWatched(p)) stopWatching(p);
         if (isWatching(p)) removeViewer(p);
     }
 
     @EventHandler
     public void invClose(InventoryCloseEvent e) {
         Player p = (Player) e.getPlayer();
+        Inventory closed = e.getInventory();
 
-        if (isBeingWatched(p)) removeFromWatch(p);
-        if (isWatching(p)) removeViewer(p);
+        if (closed.getHolder(false) instanceof EquipView) removeViewer(p);
     }
 
     @EventHandler(ignoreCancelled = true)
     public void armorChange(PlayerArmorChangeEvent e) {
-        Player p = e.getPlayer();
+        if (isBeingWatched(e.getPlayer())) updateView(e.getPlayer());
+    }
 
+    @EventHandler(ignoreCancelled = true)
+    public void itemDamage(PlayerItemDamageEvent e) {
+        Player p = e.getPlayer();
         if (!isBeingWatched(p)) return;
-        updateWatchers(p);
+
+        ItemStack item = e.getItem();
+        if (item.isEmpty() || item.getItemMeta().isUnbreakable()) return;
+
+        Bukkit.getGlobalRegionScheduler().execute(Lukitils.getInstance(), () -> updateView(p));
     }
 
     @EventHandler(ignoreCancelled = true)
     public void invClick(InventoryClickEvent e) {
-        Player p = (Player) e.getWhoClicked();
-        Inventory inv = e.getClickedInventory();
-        if (inv == null) return;
+        Player viewer = (Player) e.getWhoClicked();
+        Inventory clicked = e.getClickedInventory();
+        if (clicked == null) return;
 
-        if (isBeingWatched(p) && inv == p.getInventory() && e.getSlotType() == InventoryType.SlotType.ARMOR) updateWatchers(p);
+        if (isBeingWatched(viewer) && clicked == viewer.getInventory() && e.getSlotType() == InventoryType.SlotType.ARMOR) Bukkit.getGlobalRegionScheduler().execute(Lukitils.getInstance(), () -> updateView(viewer));
 
-        if (inv.getHolder(false) instanceof EquipView eV) {
-            Player watched = eV.getPlayer();
-            EntityEquipment equip = watched.getEquipment();
-
-            switch (e.getSlot()) {
-                case 0 -> equip.setHelmet(e.getCursor(), true);
-                case 1 -> equip.setChestplate(e.getCursor(), true);
-                case 2 -> equip.setLeggings(e.getCursor(), true);
-                case 3 -> equip.setBoots(e.getCursor(), true);
-                case 4 -> equip.setItemInOffHand(e.getCursor(), true);
-            }
-
+        if (clicked.getHolder(false) instanceof EquipView view) {
             e.setCancelled(true);
 
+            Player target = view.getPlayer();
+            EntityEquipment equip = target.getEquipment();
+            ItemStack cursor = e.getCursor();
             ItemStack current = e.getCurrentItem();
-            p.setItemOnCursor(current != null && !p.getItemOnCursor().isSimilar(current) ? current : ItemStack.empty());
-            updateWatchers(watched);
+
+            switch (e.getSlot()) {
+                case 0 -> equip.setHelmet(cursor, true);
+                case 1 -> equip.setChestplate(cursor, true);
+                case 2 -> equip.setLeggings(cursor, true);
+                case 3 -> equip.setBoots(cursor, true);
+                default -> equip.setItemInOffHand(cursor, true);
+            }
+
+            viewer.setItemOnCursor(current == null ? ItemStack.empty() : current);
+            updateView(target);
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void invDrag(InventoryDragEvent e) {
-        Player p = (Player) e.getWhoClicked();
         Inventory inv = e.getInventory();
 
-        if (isBeingWatched(p) && inv == p.getInventory()) updateWatchers(p);
+        if (inv.getHolder(false) instanceof EquipView) {
+            e.setCancelled(true);
+            return;
+        }
+
+        Player p = (Player) e.getWhoClicked();
+        if (isBeingWatched(p) && inv == p.getInventory()) Bukkit.getGlobalRegionScheduler().execute(Lukitils.getInstance(), () -> updateView(p));
     }
 }
