@@ -11,8 +11,9 @@ import me.lukiiy.utils.help.Toast
 import me.lukiiy.utils.help.Utils
 import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
+import me.lukiiy.utils.help.Utils.asPlainString
 import me.lukiiy.utils.help.Utils.getPlayersOrThrow
-import me.lukiiy.utils.help.Utils.group
+import me.lukiiy.utils.help.Utils.mark
 import me.lukiiy.utils.help.Utils.stripArgument
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.Style
@@ -53,9 +54,10 @@ object DisplayToast {
 
     fun handle(sender: CommandSender, targets: List<Player>, style: Toast.Style, item: ItemStack, message: String) {
         val (msg, chatAnnounce) = message.replace("/n", "\n").replace("&", "§").stripArgument("c")
+        val mark = targets.mark(Style.style(Defaults.YELLOW))
 
-        Utils.adminCmdFeedback(sender, "Displyed a toast to ${targets.group()}")
-        sender.sendMessage(Defaults.neutral("Displaying a toast to ".asFancyString().append(targets.group(Style.style(Defaults.YELLOW)))))
+        Utils.adminCmdFeedback(sender, "Displyed a toast to ${mark.asPlainString()}")
+        sender.sendMessage(Defaults.neutral("Displayed a toast to ".asFancyString().append(mark)))
         Toast.display(sender.name, targets, style, item, Defaults.FancyString.deserialize(msg), chatAnnounce)
     }
 }

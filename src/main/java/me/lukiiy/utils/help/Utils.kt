@@ -6,6 +6,7 @@ import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.Lukitils
+import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
 import net.kyori.adventure.text.event.ClickEvent
@@ -13,6 +14,9 @@ import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.Style
 import net.kyori.adventure.text.format.TextDecoration
+import net.kyori.adventure.text.`object`.ObjectContents
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.NamespacedKey
@@ -22,9 +26,10 @@ import org.bukkit.attribute.AttributeModifier
 import org.bukkit.command.CommandSender
 import org.bukkit.command.ConsoleCommandSender
 import org.bukkit.entity.Player
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 
 object Utils {
-
     // Component Help!
     fun adminCmdFeedback(sender: CommandSender, message: String) {
         if (!Lukitils.getInstance().config.getBoolean("commandFeedback")) return
@@ -44,6 +49,12 @@ object Utils {
     fun String.asFancyString(): Component = Defaults.FancyString.deserialize(this)
 
     @JvmStatic
+    fun Component.asLegacyString(): String = LegacyComponentSerializer.legacySection().serialize(this)
+
+    @JvmStatic
+    fun Component.asPlainString(): String = PlainTextComponentSerializer.plainText().serialize(this)
+
+    @JvmStatic
     fun Location.toComponent(): Component {
         val coordString = "${this.blockX} ${this.blockY} ${this.blockZ}"
 
@@ -51,7 +62,7 @@ object Utils {
     }
 
     @JvmStatic
-    fun Location.toComponentWithContext(origin: Location): Component { // Probably needs refactoring
+    fun Location.toVanillalikeComponent(): Component { // Probably needs refactoring
         val dim = when (this.world?.environment) {
             World.Environment.NORMAL -> "overworld"
             World.Environment.NETHER -> "the_nether"
@@ -78,6 +89,19 @@ object Utils {
     @JvmOverloads
     fun Double.boundedScale(max: Double = 10.0): Double = (this - 1.0).coerceIn(-0.9, max)
 
+    @JvmStatic
+    fun Double.fancy(): String {
+        val symbols = DecimalFormatSymbols().apply {
+            groupingSeparator = '.'
+            decimalSeparator = ','
+        }
+
+        val format = DecimalFormat("#,##0.##", symbols)
+
+        format.isGroupingUsed = true
+        return format.format(this)
+    }
+
     // Player Extensions!
     @JvmStatic
     fun Player.getSpawn(): Location {
@@ -86,12 +110,24 @@ object Utils {
     }
 
     @JvmStatic
-    fun List<Player>.group(): String = if (this.size == 1) this.first().name else "${this.size} players"
+    @JvmOverloads
+    fun Player.mark(style: Style = Style.empty(), entityHover: Boolean = true, head: Boolean = false): Component {
+        var end = Component.empty()
+        var body = displayName().style(style)
+
+        if (entityHover) body = body.hoverEvent(HoverEvent.showEntity(HoverEvent.ShowEntity.showEntity(Key.key(Key.MINECRAFT_NAMESPACE, "player"), this.uniqueId, this.name())))
+        if (head) end = end.append(Component.`object`(ObjectContents.playerHead(this.playerProfile)).appendSpace())
+        end = end.append(body)
+
+        return end
+    }
 
     @JvmStatic
-    fun List<Player>.group(style: Style): Component {
-        if (this.size == 1) return this.first().name()
-        return Component.text(this.group()).style(style).hoverEvent(HoverEvent.showText(Component.join(JoinConfiguration.newlines(), this.stream().map { p -> p.name().style(style) }.toList())))
+    @JvmOverloads
+    fun Collection<Player>.mark(style: Style = Style.empty(), heads: Boolean = false): Component {
+        if (this.size == 1) return this.first().mark(style)
+
+        return Component.text("${this.size} players").style(style).hoverEvent(HoverEvent.showText(Component.join(JoinConfiguration.newlines(), this.stream().map { it.mark(style, false, heads) }.toList())))
     }
 
     @JvmStatic

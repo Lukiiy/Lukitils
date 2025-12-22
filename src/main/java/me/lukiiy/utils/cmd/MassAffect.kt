@@ -12,8 +12,10 @@ import me.lukiiy.utils.help.MassEffect
 import me.lukiiy.utils.help.Utils
 import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
+import me.lukiiy.utils.help.Utils.asPlainString
+import me.lukiiy.utils.help.Utils.fancy
 import me.lukiiy.utils.help.Utils.getPlayersOrThrow
-import me.lukiiy.utils.help.Utils.group
+import me.lukiiy.utils.help.Utils.mark
 import me.lukiiy.utils.idk.MassEffectArgument
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.Style
@@ -55,10 +57,14 @@ object MassAffect {
 
     private fun handle(sender: CommandSender, targets: List<Player>, effect: MassEffect, intensity: Double) {
         val toRevert = intensity == 0.0
-        val msg = if (toRevert) "Reverting ".asFancyString().append(Component.text(effect.name()).color(Defaults.YELLOW)).append("'s changes for ".asFancyString()) else "Applying ".asFancyString().append(Component.text(effect.name()).color(Defaults.YELLOW)).append(" with intensity $intensity to ".asFancyString()) // oh the beauty of this line.
+        var msg = if (toRevert) "Reverting ".asFancyString().append(Component.text(effect.name()).color(Defaults.YELLOW)).append("'s changes for ".asFancyString()) else "Applying ".asFancyString().append(Component.text(effect.name()).color(Defaults.YELLOW)) // oh the beauty of this line.
+
+        val intens = intensity.fancy()
+        if (!toRevert && intensity != 1.0) msg = msg.append(" with intensity ".asFancyString()).append(intens.asFancyString()).color(Defaults.YELLOW)
+        val mark = targets.mark(Style.style(Defaults.YELLOW))
 
         targets.forEach { if (toRevert) effect.clear(it) else effect.apply(it, intensity + 1) }
-        Utils.adminCmdFeedback(sender, "Massaffected ${targets.group()} with ${effect.name()} and intensity $intensity")
-        sender.sendMessage(Defaults.neutral(msg.append(targets.group(Style.style(Defaults.YELLOW)))))
+        Utils.adminCmdFeedback(sender, "Massaffected ${mark.asPlainString()} with ${effect.name()} and intensity $intens")
+        sender.sendMessage(Defaults.neutral(msg.append(mark)))
     }
 }

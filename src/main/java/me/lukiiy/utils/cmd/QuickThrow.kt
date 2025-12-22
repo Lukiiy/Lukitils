@@ -11,6 +11,7 @@ import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.help.Utils
 import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
+import me.lukiiy.utils.help.Utils.fancy
 import net.kyori.adventure.text.Component
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.EntityType
@@ -41,10 +42,11 @@ object QuickThrow {
 
         p.world.spawnEntity(p.eyeLocation, entityType).apply {
             if (this is Projectile) this.shooter = p
+
             velocity = p.location.direction.normalize().multiply(speed)
         }
 
         Utils.adminCmdFeedback(sender, "Quick threw a $entityKey")
-        sender.sendMessage(Defaults.neutral("Quick throwing a ".asFancyString().append(Component.translatable(entityKey).color(Defaults.YELLOW)).append(" with speed ".asFancyString()).append("$speed".asFancyString().color(Defaults.YELLOW))))
+        sender.sendMessage(Defaults.neutral("Quick throwing ".asFancyString().append(Component.translatable(entityKey).color(Defaults.YELLOW)).append(" with speed ".asFancyString()).append(speed.fancy().asFancyString().color(Defaults.YELLOW))))
     }
 }

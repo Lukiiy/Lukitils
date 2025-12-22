@@ -6,10 +6,12 @@ import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import me.lukiiy.utils.Defaults
+import me.lukiiy.utils.help.Utils
 import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
+import me.lukiiy.utils.help.Utils.asPlainString
 import me.lukiiy.utils.help.Utils.getPlayersOrThrow
-import me.lukiiy.utils.help.Utils.group
+import me.lukiiy.utils.help.Utils.mark
 import net.kyori.adventure.text.format.Style
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -38,7 +40,10 @@ object Barelife {
             it.saturation = 0f
         }
 
-        sender.sendMessage(Defaults.neutral("Barelife'd ".asFancyString().append(players.group(Style.style(Defaults.YELLOW)))))
+        val mark = players.mark(Style.style(Defaults.YELLOW))
+
+        sender.sendMessage(Defaults.neutral("Barelife'd ".asFancyString().append(mark)))
+        Utils.adminCmdFeedback(sender, "Barelife'd ${mark.asPlainString()}")
     }
 
     fun register(): LiteralCommandNode<CommandSourceStack> = main.build()

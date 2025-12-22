@@ -3,7 +3,6 @@ package me.lukiiy.utils.cmd
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.tree.LiteralCommandNode
-import com.viaversion.viaversion.api.Via
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.dialog.Dialog
@@ -13,10 +12,13 @@ import io.papermc.paper.registry.data.dialog.type.DialogType
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
+import me.lukiiy.utils.help.Utils.getProtocol
 import me.lukiiy.utils.help.Utils.getSpawn
-import me.lukiiy.utils.help.Utils.toComponent
+import me.lukiiy.utils.help.Utils.toVanillalikeComponent
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.JoinConfiguration
 import net.kyori.adventure.text.TextComponent
+import net.kyori.adventure.text.`object`.ObjectContents
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.OfflinePlayer
@@ -63,7 +65,8 @@ object PlayerData {
         if (!target.hasPlayedBefore()) throw Defaults.CmdException(Component.text("This player has never played here before"))
 
         val name = target.player?.name() ?: target.name?.asFancyString() ?: "Player".asFancyString()
-        val header = name.color(Defaults.YELLOW).append(Component.text("'s Info").color(Defaults.GRAY))
+        val head = if (target.player != null) Component.`object`(ObjectContents.playerHead(target.player!!.playerProfile)).appendSpace() else Component.empty()
+        val header = head.append(name.color(Defaults.YELLOW).append(Component.text("'s Info").color(Defaults.GRAY)))
 
         val baseBuild = DialogBase.builder(header).canCloseWithEscape(true).afterAction(DialogBase.DialogAfterAction.CLOSE)
 
@@ -92,40 +95,36 @@ object PlayerData {
         )
 
         val locations = listOfNotNull(
-            Component.text("Current: ").append(player.location.toComponent().color(Defaults.ORANGE)),
-            Component.text("Spawn: ").append(player.getSpawn().toComponent().color(Defaults.ORANGE)),
-            if (player.compassTarget != player.getSpawn()) { Component.text("Compass: ").append(player.compassTarget.toComponent().color(Defaults.ORANGE)) } else null,
-            player.lastDeathLocation?.let { Component.text("Last death: ").append(it.toComponent().color(Defaults.ORANGE)) }
+            Component.text("Current: ").append(player.location.toVanillalikeComponent().color(Defaults.ORANGE)),
+            Component.text("Spawn: ").append(player.getSpawn().toVanillalikeComponent().color(Defaults.ORANGE)),
+            if (player.compassTarget != player.getSpawn()) { Component.text("Compass: ").append(player.compassTarget.toVanillalikeComponent().color(Defaults.ORANGE)) } else null,
+            player.lastDeathLocation?.let { Component.text("Last death: ").append(it.toVanillalikeComponent().color(Defaults.ORANGE)) }
         )
 
-        baseBuild.body(mutableListOf<DialogBody>().apply {
-            if (player.isOnline) {
-                add(DialogBody.item(ItemStack.of(Material.APPLE)).showTooltip(false).build())
-                basic.forEach { add(DialogBody.plainMessage(it)) }
+        if (sender is Player && sender.getProtocol() > 770) {
+            baseBuild.body(mutableListOf<DialogBody>().apply {
+                if (player.isOnline) {
+                    add(DialogBody.item(ItemStack.of(Material.APPLE)).showTooltip(false).build())
+                    add(category(basic))
 
-                if (flags.isNotEmpty()) {
-                    add(DialogBody.plainMessage(Component.empty()))
-                    add(DialogBody.item(ItemStack.of(Material.BOOK)).showTooltip(false).build())
-                    add(DialogBody.plainMessage(Defaults.LIST_PREFIX.append(fancyData("Enabled flags", flags.joinToString(", ")))))
+                    if (flags.isNotEmpty()) {
+                        add(DialogBody.plainMessage(Component.empty()))
+                        add(DialogBody.item(ItemStack.of(Material.BOOK)).showTooltip(false).build())
+                        add(DialogBody.plainMessage(Defaults.LIST_PREFIX.append(fancyData("Enabled flags", flags.joinToString(", ")))))
+                    }
                 }
-            }
 
-            add(DialogBody.plainMessage(Component.empty()))
-            add(DialogBody.item(ItemStack.of(Material.COMPASS)).showTooltip(false).build())
-            locations.forEach { add(DialogBody.plainMessage(it)) }
+                add(DialogBody.item(ItemStack.of(Material.COMPASS)).showTooltip(false).build())
+                add(category(locations))
 
-            add(DialogBody.plainMessage(Component.empty()))
-            add(DialogBody.item(ItemStack.of(Material.PAPER)).showTooltip(false).build())
-            offData.forEach { add(DialogBody.plainMessage(it)) }
-        })
+                add(DialogBody.item(ItemStack.of(Material.BOOK)).showTooltip(false).build())
+                add(category(offData))
+            })
 
-        val dialog = Dialog.create { it.empty().apply {
-            base(baseBuild.build())
-            type(DialogType.notice())
-        } }
-
-        if (sender is Player && Via.getAPI().getPlayerVersion(sender) > 770) {
-            sender.showDialog(dialog)
+            sender.showDialog(Dialog.create { it.empty().apply {
+                base(baseBuild.build())
+                type(DialogType.notice())
+            } })
         } else {
             val everything = header.appendNewline().appendNewline()
                 .append(Component.join(Defaults.LIST_LIKE, basic)).appendNewline().appendNewline()
@@ -137,6 +136,8 @@ object PlayerData {
             sender.sendMessage(everything)
         }
     }
+
+    private fun category(lines: List<Component>): DialogBody = DialogBody.plainMessage(Component.join(JoinConfiguration.newlines(), lines))
 
     private fun fancyData(title: String, value: Any): TextComponent = Component.text("$title: ").append(Component.text(value.toString()).color(Defaults.ORANGE))
 
