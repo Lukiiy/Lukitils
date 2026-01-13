@@ -1,5 +1,7 @@
 package me.lukiiy.utils.help
 
+import com.destroystokyo.paper.profile.PlayerProfile
+import com.destroystokyo.paper.profile.ProfileProperty
 import com.mojang.brigadier.context.CommandContext
 import com.viaversion.viaversion.api.Via
 import io.papermc.paper.command.brigadier.CommandSourceStack
@@ -28,8 +30,11 @@ import org.bukkit.command.ConsoleCommandSender
 import org.bukkit.entity.Player
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
+import java.util.UUID
 
 object Utils {
+    val USERNAME_REGEX = Regex("^[A-Za-z0-9_]{1,16}$")
+
     // Component Help!
     fun adminCmdFeedback(sender: CommandSender, message: String) {
         if (!Lukitils.getInstance().config.getBoolean("commandFeedback")) return
@@ -150,6 +155,101 @@ object Utils {
 
     @JvmStatic
     fun Player.removeTransientMod(id: String, attribute: Attribute) = this.getAttribute(attribute)?.removeModifier(NamespacedKey(Lukitils.getInstance(), id))
+
+    /**
+     * Changes a player's nametag.
+     * @param newUsername A new username, without invalid characters or having more than 16 characters (following [USERNAME_REGEX])
+     * @param viewers You can specify which players will see the new nametag. Nullable.
+     */
+    @JvmStatic
+    @JvmOverloads
+    fun Player.setNametag(newUsername: String, viewers: Collection<Player>? = null): Boolean =
+        newUsername.trim().takeIf { USERNAME_REGEX.matches(it) }
+            ?.let { safeProfile(uniqueId, it) }
+            ?.also { applyProfile(it, viewers) } != null
+
+    /**
+     * Changes a player's skin (and cape) to another player's.
+     * @param username A valid username to copy the skin from.
+     * @param viewers You can specify which players will see the new nametag. Nullable (global).
+     */
+    @JvmStatic
+    @JvmOverloads
+    fun Player.setTextures(username: String, viewers: Collection<Player>? = null): Boolean {
+        Bukkit.getAsyncScheduler().runNow(Lukitils.getInstance()) {
+            val prop = runCatching {
+                Bukkit.createProfile(username).apply { complete(true) }.properties.firstOrNull { it.name.equals("textures", true) }
+            }.getOrNull()
+
+            Bukkit.getGlobalRegionScheduler().run(Lukitils.getInstance()) {
+                prop?.let { applyTextureAndRefresh(it, viewers) }
+            }
+        }
+        return true
+    }
+
+    /**
+     * Changes a player's skin (and cape) to another player's.
+     * @param skin A valid UUID of a player to copy the skin from.
+     * @param viewers You can specify which players will see the new nametag. Nullable (global).
+     */
+    @JvmStatic
+    @JvmOverloads
+    fun Player.setTextures(skin: UUID, viewers: Collection<Player>? = null): Boolean {
+        Bukkit.getAsyncScheduler().runNow(Lukitils.getInstance()) {
+            val prop = runCatching {
+                Bukkit.createProfile(skin, null).apply { complete(true) }.properties.firstOrNull { it.name.equals("textures", true) }
+            }.getOrNull()
+
+            Bukkit.getGlobalRegionScheduler().run(Lukitils.getInstance()) {
+                prop?.let { applyTextureAndRefresh(it, viewers) }
+            }
+        }
+        return true
+    }
+
+    /**
+     * Changes a player's skin (& cape) to a custom one.
+     * @param skin The texture data.
+     * @param signature The texture signature.
+     * @param viewers You can specify which players will see the new nametag. Nullable (global).
+     */
+    @JvmStatic
+    @JvmOverloads
+    fun Player.setTextures(skin: String, signature: String, viewers: Collection<Player>? = null): Boolean {
+        applyTextureAndRefresh(ProfileProperty("textures", skin, signature), viewers)
+        return true
+    }
+
+    internal fun safeProfile(uuid: UUID, name: String): PlayerProfile = runCatching { Bukkit.createProfileExact(uuid, name) }.getOrElse { Bukkit.createProfile(uuid, name) }
+
+    fun Player.applyProfile(profile: PlayerProfile, viewers: Collection<Player>?) {
+        scheduler.run(Lukitils.getInstance(), {
+            playerProfile = profile
+
+            playerListName(Component.text(profile.name ?: name))
+            refreshForViewers(this, (viewers ?: Bukkit.getOnlinePlayers()).filter { it.uniqueId != uniqueId })
+        }, null)
+    }
+
+    internal fun Player.applyTextureAndRefresh(prop: ProfileProperty, viewers: Collection<Player>?) {
+        val profile = safeProfile(uniqueId, playerProfile.name ?: name).apply {
+            setProperties(properties.filterNot { it.name.equals("textures", true) }.plus(prop))
+        }
+
+        applyProfile(profile, viewers)
+    }
+
+    internal fun refreshForViewers(target: Player, viewers: Collection<Player>) {
+        viewers.forEach { v ->
+            runCatching {
+                v.scheduler.run(Lukitils.getInstance(), {
+                    v.hideEntity(Lukitils.getInstance(), target)
+                    v.showEntity(Lukitils.getInstance(), target)
+                }, null)
+            }
+        }
+    }
 
     // Command Extensions!
     @JvmStatic
