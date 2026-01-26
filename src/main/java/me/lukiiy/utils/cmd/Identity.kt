@@ -2,6 +2,8 @@ package me.lukiiy.utils.cmd
 
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.arguments.StringArgumentType
+import com.mojang.brigadier.tree.LiteralCommandNode
+import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.help.Utils
@@ -84,4 +86,6 @@ object Identity {
                 })
             )
         )
+
+    fun register(): LiteralCommandNode<CommandSourceStack> = main.build()
 }

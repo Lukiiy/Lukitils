@@ -29,6 +29,7 @@ class Boot : PluginBootstrap {
                 register(PlayerData.register(), "Shows some player data from users", listOf("playerinfo"))
                 register(Reload.register(), "Reloads Lukitils' config...")
                 register(QuickThrow.register(), "Quick throws an entity")
+                register(Identity.register(), "Change your identity")
             }
         }
     }
