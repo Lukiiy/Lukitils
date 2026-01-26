@@ -185,6 +185,7 @@ object Utils {
                 prop?.let { applyTextureAndRefresh(it, viewers) }
             }
         }
+
         return true
     }
 
@@ -205,6 +206,7 @@ object Utils {
                 prop?.let { applyTextureAndRefresh(it, viewers) }
             }
         }
+
         return true
     }
 
@@ -218,6 +220,28 @@ object Utils {
     @JvmOverloads
     fun Player.setTextures(skin: String, signature: String, viewers: Collection<Player>? = null): Boolean {
         applyTextureAndRefresh(ProfileProperty("textures", skin, signature), viewers)
+        return true
+    }
+
+    @JvmStatic
+    @JvmOverloads
+    fun Player.resetNametag(viewers: Collection<Player>? = null): Boolean {
+        applyProfile(safeProfile(uniqueId, name), viewers)
+        return true
+    }
+
+    @JvmStatic
+    @JvmOverloads
+    fun Player.resetTextures(viewers: Collection<Player>? = null): Boolean {
+        Bukkit.getAsyncScheduler().runNow(Lukitils.getInstance()) {
+            val prop = runCatching {
+                Bukkit.createProfile(uniqueId, name).apply { complete(true) }.properties.firstOrNull { it.name.equals("textures", true) }
+            }.getOrNull()
+            Bukkit.getGlobalRegionScheduler().run(Lukitils.getInstance()) {
+                prop?.let { applyTextureAndRefresh(it, viewers) }
+            }
+        }
+
         return true
     }
 
