@@ -39,14 +39,27 @@ object LukiMassEffects {
 
     private val KABOOM: MassEffect = object : MassEffect {
         override fun apply(player: Player, intensity: Double) {
+            val total = 5 + intensity
+            val perTick = total / 10
+
             player.apply {
                 world.apply {
                     spawnParticle(Particle.EXPLOSION_EMITTER, location.add(0.0, 1.0, 0.0), 1)
                     strikeLightningEffect(location)
                 }
 
-                velocity = velocity.setY(15 + intensity)
                 showTitle(Title.title(Component.text("KABOOM!").color(Defaults.RED), Component.empty(), Title.Times.times(Duration.ZERO, Duration.ofSeconds(2), Duration.ofSeconds(1))))
+                var applied = 0
+
+                scheduler.runAtFixedRate(Lukitils(), {
+                    if (!player.isValid || applied >= 3) {
+                        it.cancel()
+                        return@runAtFixedRate
+                    }
+
+                    player.velocity.setY(perTick)
+                    applied++
+                }, null, 1L, 1L)
             }
         }
 
