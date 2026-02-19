@@ -29,25 +29,22 @@ object Vanish : Listener {
 
     fun getVanished(): Set<UUID> = vanished
 
-    fun registerMain(): LiteralCommandNode<CommandSourceStack> {
-        return Commands.literal("vanish")
-            .requires { req(it.sender) }
-            .then(Commands.argument("player", ArgumentTypes.player())
-                .executes {
-                    val sender = it.source.sender
-                    val target = it.getPlayerOrThrow("player")
-
-                    handle(sender, target)
-                    Command.SINGLE_SUCCESS
-                })
+    private val main = Commands.literal("vanish")
+        .requires { req(it.sender) }
+        .then(Commands.argument("player", ArgumentTypes.player())
             .executes {
-                val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
+                val sender = it.source.sender
+                val target = it.getPlayerOrThrow("player")
 
-                handle(sender, sender)
+                handle(sender, target)
                 Command.SINGLE_SUCCESS
-            }
-        .build()
-    }
+            })
+        .executes {
+            val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
+
+            handle(sender, sender)
+            Command.SINGLE_SUCCESS
+        }
 
     fun toggle(target: Player): Boolean {
         val isVanished = target.uniqueId in vanished
@@ -77,21 +74,21 @@ object Vanish : Listener {
         if (!Lukitils.getInstance().config.getBoolean("silentStats", true)) target.sendMessage(message)
     }
 
-    fun registerList(): LiteralCommandNode<CommandSourceStack> {
-        return Commands.literal("vanishlist")
-            .requires { req(it.sender) }
-            .executes {
-                val sender = it.source.sender
-                if (vanished.isEmpty()) throw Defaults.CmdException(Component.text("No vanished players found"))
+    private val list = Commands.literal("vanishlist")
+        .requires { req(it.sender) }
+        .executes {
+            val sender = it.source.sender
+            if (vanished.isEmpty()) throw Defaults.CmdException(Component.text("No vanished players found"))
 
-                val players = vanished.mapNotNull { p -> Bukkit.getPlayer(p)?.name() }
-                if (players.isEmpty()) throw Defaults.CmdException(Component.text("No online vanished players found"))
+            val players = vanished.mapNotNull { p -> Bukkit.getPlayer(p)?.name() }
+            if (players.isEmpty()) throw Defaults.CmdException(Component.text("No online vanished players found"))
 
-                sender.sendMessage(Defaults.neutral(Component.text("Vanished players:").appendNewline().append(Component.join(Defaults.LIST_LIKE, players.map { c -> c.color(Defaults.YELLOW) }))))
-                Command.SINGLE_SUCCESS
-            }
-        .build()
-    }
+            sender.sendMessage(Defaults.neutral(Component.text("Vanished players:").appendNewline().append(Component.join(Defaults.LIST_LIKE, players.map { c -> c.color(Defaults.YELLOW) }))))
+            Command.SINGLE_SUCCESS
+        }
+
+    fun register(): LiteralCommandNode<CommandSourceStack> = main.build()
+    fun registerList(): LiteralCommandNode<CommandSourceStack> = list.build()
 
     // Listener
     @EventHandler(priority = EventPriority.LOWEST)

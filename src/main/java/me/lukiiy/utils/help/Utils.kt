@@ -19,6 +19,9 @@ import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.`object`.ObjectContents
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket
+import net.minecraft.network.protocol.common.custom.BrandPayload
+import net.minecraft.server.level.ServerPlayer
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.NamespacedKey
@@ -27,13 +30,21 @@ import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.command.CommandSender
 import org.bukkit.command.ConsoleCommandSender
+import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
+import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerQuitEvent
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.UUID
 
-object Utils {
+object Utils : Listener {
     val USERNAME_REGEX = Regex("^[A-Za-z0-9_]{1,16}$")
+
+    internal val originalSkins = mutableMapOf<UUID, ProfileProperty?>()
+    internal val originalNametags = mutableMapOf<UUID, String>()
 
     // Component Help!
     fun adminCmdFeedback(sender: CommandSender, message: String) {
@@ -67,7 +78,7 @@ object Utils {
     }
 
     @JvmStatic
-    fun Location.toVanillalikeComponent(): Component { // Probably needs refactoring
+    fun Location.copyableComponent(): Component { // Probably needs refactoring
         val dim = when (this.world?.environment) {
             World.Environment.NORMAL -> "overworld"
             World.Environment.NETHER -> "the_nether"
@@ -76,7 +87,7 @@ object Utils {
         }
 
         val coords = "${this.blockX} ${this.blockY} ${this.blockZ}"
-        return coords.asFancyString().hoverEvent(HoverEvent.showText(Component.text("Click to suggest command!").color(Defaults.YELLOW))).clickEvent(ClickEvent.suggestCommand("/execute ${if (dim.isNotEmpty()) "in minecraft:$dim" else ""} run tp @s $coords")).append(" @ ${this.world.name}".asFancyString())
+        return coords.asFancyString().hoverEvent(HoverEvent.showText(Component.text("Click to copy command!").color(Defaults.YELLOW))).clickEvent(ClickEvent.copyToClipboard("/execute ${if (dim.isNotEmpty()) "in minecraft:$dim" else ""} run tp @s $coords")).append(" @ ${this.world.name}".asFancyString())
     }
 
     @JvmStatic
@@ -108,11 +119,19 @@ object Utils {
     }
 
     // Player Extensions!
-    @JvmStatic
-    fun Player.getSpawn(): Location {
-        val loc = this.respawnLocation
-        return loc ?: Bukkit.getWorlds()[0].spawnLocation
+    fun Player.getServerPlayer(): ServerPlayer = (this as CraftPlayer).handle
+
+    fun brand(p: Player, brand: Component?) {
+        if (brand == null || brand == Component.empty()) return
+        val fBrand = LegacyComponentSerializer.legacySection().serialize(brand)
+
+        try {
+            p.getServerPlayer().connection.send(ClientboundCustomPayloadPacket(BrandPayload(fBrand)))
+        } catch (_: Exception) {}
     }
+
+    @JvmStatic
+    fun Player.getSpawn(): Location = this.respawnLocation ?: Bukkit.getWorlds()[0].spawnLocation
 
     @JvmStatic
     @JvmOverloads
@@ -136,12 +155,10 @@ object Utils {
     }
 
     @JvmStatic
-    fun Player.getProtocol(): Int {
-        return try {
-            Via.getAPI().getPlayerVersion(this)
-        } catch (_: Exception) {
-            player!!.protocolVersion // wow.
-        }
+    fun Player.getProtocol(): Int = try {
+        Via.getAPI().getPlayerVersion(this)
+    } catch (_: Exception) {
+        player!!.protocolVersion // wow.
     }
 
     @JvmStatic
@@ -158,15 +175,16 @@ object Utils {
 
     /**
      * Changes a player's nametag.
-     * @param newUsername A new username, without invalid characters or having more than 16 characters (following [USERNAME_REGEX])
+     * @param newUsername A new username, acceptable by the [USERNAME_REGEX] regex
      * @param viewers You can specify which players will see the new nametag. Nullable.
      */
     @JvmStatic
     @JvmOverloads
-    fun Player.setNametag(newUsername: String, viewers: Collection<Player>? = null): Boolean =
-        newUsername.trim().takeIf { USERNAME_REGEX.matches(it) }
-            ?.let { safeProfile(uniqueId, it) }
-            ?.also { applyProfile(it, viewers) } != null
+    fun Player.setNametag(newUsername: String, viewers: Collection<Player>? = null): Boolean {
+        if (uniqueId !in originalNametags) originalNametags[uniqueId] = playerProfile.name ?: name
+
+        return newUsername.trim().takeIf { USERNAME_REGEX.matches(it) }?.let { safeProfile(uniqueId, it) }?.also { applyProfile(it, viewers) } != null
+    }
 
     /**
      * Changes a player's skin (and cape) to another player's.
@@ -226,16 +244,28 @@ object Utils {
     @JvmStatic
     @JvmOverloads
     fun Player.resetNametag(viewers: Collection<Player>? = null): Boolean {
-        applyProfile(safeProfile(uniqueId, name), viewers)
+        applyProfile(safeProfile(uniqueId, originalNametags.remove(uniqueId) ?: name), viewers)
         return true
     }
 
     @JvmStatic
     @JvmOverloads
     fun Player.resetTextures(viewers: Collection<Player>? = null): Boolean {
+        if (originalSkins.containsKey(uniqueId)) {
+            val saved = originalSkins.remove(uniqueId)
+            val profile = safeProfile(uniqueId, playerProfile.name ?: name).apply {
+                val base = properties.filterNot { it.name.equals("textures", true) }
+
+                setProperties(if (saved != null) base + saved else base)
+            }
+
+            applyProfile(profile, viewers)
+            return true
+        }
+
         Bukkit.getAsyncScheduler().runNow(Lukitils.getInstance()) {
             val prop = runCatching {
-                Bukkit.createProfile(uniqueId, name).apply { complete(true) }.properties.firstOrNull { it.name.equals("textures", true) }
+                Bukkit.createProfile(uniqueId, null).apply { complete(true) }.properties.firstOrNull { it.name.equals("textures", true) }
             }.getOrNull()
             Bukkit.getGlobalRegionScheduler().run(Lukitils.getInstance()) {
                 prop?.let { applyTextureAndRefresh(it, viewers) }
@@ -251,18 +281,27 @@ object Utils {
         scheduler.run(Lukitils.getInstance(), {
             playerProfile = profile
 
-            playerListName(Component.text(profile.name ?: name))
+            val newName = Component.text(profile.name ?: name)
+            val team = scoreboard.getPlayerTeam(this)
+
+            val fName = if (team != null) Component.empty().append(team.prefix()).append(newName).append(team.suffix()) else newName
+
+            playerListName(fName)
+            displayName(fName)
             refreshForViewers(this, (viewers ?: Bukkit.getOnlinePlayers()).filter { it.uniqueId != uniqueId })
         }, null)
     }
 
     internal fun Player.applyTextureAndRefresh(prop: ProfileProperty, viewers: Collection<Player>?) {
+        if (uniqueId !in originalSkins) originalSkins[uniqueId] = playerProfile.properties.firstOrNull { it.name.equals("textures", true) }?.copy()
+
         val profile = safeProfile(uniqueId, playerProfile.name ?: name).apply {
             setProperties(properties.filterNot { it.name.equals("textures", true) }.plus(prop))
         }
 
         applyProfile(profile, viewers)
     }
+
 
     internal fun refreshForViewers(target: Player, viewers: Collection<Player>) {
         viewers.forEach { v ->
@@ -275,6 +314,15 @@ object Utils {
         }
     }
 
+    // Player: Identity changes bandage patch
+    @EventHandler(priority = EventPriority.LOWEST)
+    fun quit(e: PlayerQuitEvent) {
+        val p = e.player
+
+        originalNametags.remove(p.uniqueId)
+        originalSkins.remove(p.uniqueId)
+    }
+
     // Command Extensions!
     @JvmStatic
     fun CommandContext<CommandSourceStack>.getPlayerOrThrow(arg: String): Player = getArgument(arg, PlayerSelectorArgumentResolver::class.java).resolve(source).stream().findFirst().orElse(null) ?: throw Defaults.NOT_FOUND
@@ -284,10 +332,14 @@ object Utils {
 
     // Misc Extensions!
     @JvmStatic
-    fun isFolia(): Boolean = try {
-        Class.forName("io.papermc.paper.threadedregions.RegionizedServer")
-        true
-    } catch (_: ClassNotFoundException) {
-        false
+    fun ProfileProperty.copy(): ProfileProperty = ProfileProperty(name, value, signature)
+
+    val isFolia: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        try {
+            Class.forName("io.papermc.paper.threadedregions.RegionizedServer")
+            true
+        } catch (_: ClassNotFoundException) {
+            false
+        }
     }
 }

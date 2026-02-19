@@ -14,7 +14,7 @@ import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
 import me.lukiiy.utils.help.Utils.getProtocol
 import me.lukiiy.utils.help.Utils.getSpawn
-import me.lukiiy.utils.help.Utils.toVanillalikeComponent
+import me.lukiiy.utils.help.Utils.copyableComponent
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
 import net.kyori.adventure.text.TextComponent
@@ -85,7 +85,8 @@ object PlayerData {
             if (player.totalExperience > 0) { fancyData("XP", player.totalExperience).append(fancyData(" | Level", player.level)) } else null,
             fancyData("Total Experience", player.totalExperience),
             player.getAttribute(Attribute.ARMOR)?.value?.let { if (it > 0) fancyData("Armor", it) else null },
-            fancyData("Gamemode", player.gameMode.name)
+            fancyData("Gamemode", player.gameMode.name),
+            fancyData("Client Brand", player.clientBrandName ?: "Unidentified")
         )
 
         val flags = listOfNotNull(
@@ -95,10 +96,10 @@ object PlayerData {
         )
 
         val locations = listOfNotNull(
-            Component.text("Current: ").append(player.location.toVanillalikeComponent().color(Defaults.ORANGE)),
-            Component.text("Spawn: ").append(player.getSpawn().toVanillalikeComponent().color(Defaults.ORANGE)),
-            if (player.compassTarget != player.getSpawn()) { Component.text("Compass: ").append(player.compassTarget.toVanillalikeComponent().color(Defaults.ORANGE)) } else null,
-            player.lastDeathLocation?.let { Component.text("Last death: ").append(it.toVanillalikeComponent().color(Defaults.ORANGE)) }
+            Component.text("Current: ").append(player.location.copyableComponent().color(Defaults.ORANGE)),
+            Component.text("Spawn: ").append(player.getSpawn().copyableComponent().color(Defaults.ORANGE)),
+            if (player.compassTarget != player.getSpawn()) { Component.text("Compass: ").append(player.compassTarget.copyableComponent().color(Defaults.ORANGE)) } else null,
+            player.lastDeathLocation?.let { Component.text("Last death: ").append(it.copyableComponent().color(Defaults.ORANGE)) }
         )
 
         if (sender is Player && sender.getProtocol() > 770) {

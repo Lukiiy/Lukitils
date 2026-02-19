@@ -21,7 +21,7 @@ class Boot : PluginBootstrap {
                 register(InventoryViewer.registerEquip(), "View a player's armor & offhand", listOf("viewequip"))
                 register(Ping.register(), "Displays a player's ping")
                 register(SlimeChunk.register(), "Tells if a player is in a slime chunk")
-                register(Vanish.registerMain(), "Toggles invisibility state", listOf("v"))
+                register(Vanish.register(), "Toggles invisibility state", listOf("v"))
                 register(Vanish.registerList(), "Lists every player using /vanish", listOf("vlist"))
                 register(MassAffect.register(), "Applies various effects to selected players")
                 register(Collapse.register(), "Makes an area collapse!")
@@ -30,6 +30,8 @@ class Boot : PluginBootstrap {
                 register(Reload.register(), "Reloads Lukitils' config...")
                 register(QuickThrow.register(), "Quick throws an entity")
                 register(Identity.register(), "Change your identity")
+                register(Identity.registerList(), "Lists every player using /identity")
+                register(ForceAttack.register(), "Forces entities to attack selected targets")
             }
         }
     }

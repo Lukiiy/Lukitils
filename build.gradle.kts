@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "me.lukiiy"
-version = "3.8-SNAPSHOT"
+version = "3.8"
 description = "A silly plugin that adds some cool useful things"
 
 repositories {
