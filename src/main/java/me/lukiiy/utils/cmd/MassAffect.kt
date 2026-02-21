@@ -65,6 +65,6 @@ object MassAffect {
 
         targets.forEach { if (toRevert) effect.clear(it) else effect.apply(it, intensity + 1) }
         Utils.adminCmdFeedback(sender, "Massaffected ${mark.asPlainString()} with ${effect.name()} and intensity $intens")
-        sender.sendMessage(Defaults.neutral(msg.append(mark)))
+        sender.sendMessage(Defaults.neutral(msg.append(" to ".asFancyString()).append(mark)))
     }
 }

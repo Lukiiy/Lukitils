@@ -12,6 +12,7 @@ import org.bukkit.Particle
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import org.bukkit.util.Vector
 import java.time.Duration
 
 
@@ -39,8 +40,7 @@ object LukiMassEffects {
 
     private val KABOOM: MassEffect = object : MassEffect {
         override fun apply(player: Player, intensity: Double) {
-            val total = 5 + intensity
-            val perTick = total / 10
+            val perTick = (5 + intensity) / 5
 
             player.apply {
                 world.apply {
@@ -51,15 +51,15 @@ object LukiMassEffects {
                 showTitle(Title.title(Component.text("KABOOM!").color(Defaults.RED), Component.empty(), Title.Times.times(Duration.ZERO, Duration.ofSeconds(2), Duration.ofSeconds(1))))
                 var applied = 0
 
-                scheduler.runAtFixedRate(Lukitils(), {
+                scheduler.runAtFixedRate(Lukitils.getInstance(), {
                     if (!player.isValid || applied >= 3) {
                         it.cancel()
                         return@runAtFixedRate
                     }
 
-                    player.velocity.setY(perTick)
+                    player.velocity = player.velocity.add(Vector(0.0, perTick, 0.0))
                     applied++
-                }, null, 1L, 1L)
+                }, null, 1L, 3L)
             }
         }
 
@@ -163,10 +163,11 @@ object LukiMassEffects {
         }
 
         fun drop(p: Player, i: ItemStack, d: Double) {
-            p.world.dropItemNaturally(p.location.add(0.0, 1.0, 1.0), i) {
+            p.world.dropItemNaturally(p.location.add(0.0, 1.0, 0.0), i) {
                 it.apply {
                     thrower = p.uniqueId
                     pickupDelay = 60
+
                     if (d > 0.0) velocity = velocity.multiply(d).setY(0)
                 }
             }
