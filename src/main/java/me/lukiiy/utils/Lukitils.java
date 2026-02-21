@@ -3,6 +3,7 @@ package me.lukiiy.utils;
 import me.lukiiy.utils.cmd.Invulnerability;
 import me.lukiiy.utils.cmd.Vanish;
 import me.lukiiy.utils.help.MassEffect;
+import me.lukiiy.utils.help.Utils;
 import me.lukiiy.utils.idk.Equip;
 import me.lukiiy.utils.idk.LukiMassEffects;
 import org.bukkit.plugin.PluginManager;
@@ -23,6 +24,7 @@ public final class Lukitils extends JavaPlugin {
         pm.registerEvents(Invulnerability.INSTANCE, this);
         pm.registerEvents(Vanish.INSTANCE, this);
         pm.registerEvents(new Equip(), this);
+        pm.registerEvents(Utils.INSTANCE, this);
 
         LukiMassEffects.INSTANCE.init();
     }

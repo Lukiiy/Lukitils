@@ -17,14 +17,15 @@ import me.lukiiy.utils.help.Utils.resetTextures
 import me.lukiiy.utils.help.Utils.setNametag
 import me.lukiiy.utils.help.Utils.setTextures
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.event.HoverEvent
+import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.`object`.ObjectContents
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
-import org.bukkit.entity.Player
 import java.io.File
 import java.util.UUID
 
-object Identity { // TODO
+object Identity {
     private val req: (CommandSender) -> Boolean = { it.hasPermission("identity".asPermission()) }
 
     val changedSkin = mutableSetOf<UUID>()
@@ -43,10 +44,10 @@ object Identity { // TODO
                     sender.sendMessage(Defaults.neutral(if (sender == target) "Your nametag has been reset".asFancyString() else target.name().color(Defaults.YELLOW).append("'s nametag has been reset".asFancyString())))
                     Command.SINGLE_SUCCESS
                 })
-                .then(Commands.argument("new_username", StringArgumentType.word()).executes {
+                .then(Commands.argument("username", StringArgumentType.word()).executes {
                     val sender = it.source.sender
                     val target = it.getPlayerOrThrow("player")
-                    val new = StringArgumentType.getString(it, "new_username")
+                    val new = StringArgumentType.getString(it, "username")
 
                     if (!new.matches(Utils.USERNAME_REGEX)) throw Defaults.CmdException("Invalid username! Must only include alphanumeric characters, underscores, and must be within 16 characters.".asFancyString())
 
@@ -100,29 +101,41 @@ object Identity { // TODO
             )
         )
 
-    private val list = Commands.literal("identitylist") // TODO
+    private val list = Commands.literal("identitylist")
         .requires { req(it.sender) }
         .executes {
             val sender = it.source.sender
-            if (changedNametag.isEmpty() && changedSkin.isEmpty()) throw Defaults.CmdException(Component.text("No identity changes found"))
 
-            sender.sendMessage(Defaults.neutral(Component.text("Players with changed username:").appendNewline().append(Component.join(Defaults.LIST_LIKE, changedNametag.mapNotNull { p -> Bukkit.getPlayer(p)?.name() }.map { c -> c.color(Defaults.YELLOW) }))))
-            sender.sendMessage(Defaults.neutral(Component.text("Players with changed skin:").appendNewline().append(Component.join(Defaults.LIST_LIKE, changedSkin.mapNotNull { p -> Bukkit.getPlayer(p)?.name() }.map { c -> c.color(Defaults.YELLOW) }))))
+            if (changedNametag.isEmpty() && changedSkin.isEmpty()) throw Defaults.CmdException("No identity changes found".asFancyString())
+            val affected = (changedSkin + changedNametag).toSet()
+
+            val entries = affected.mapNotNull { uuid ->
+                val changed = Bukkit.getPlayer(uuid) ?: return@mapNotNull null
+                val name = Utils.getIdChangedPlayerName(uuid) ?: changed.name
+                var hover = "Disguised as ".asFancyString().color(Defaults.GRAY)
+
+                if (name != changed.name) hover = hover.append(changed.name().color(Defaults.YELLOW)).appendSpace()
+                if (Utils.getIdChangedPlayerSkin(uuid) != null) hover = hover.append(Component.`object`(ObjectContents.playerHead(changed)).color(NamedTextColor.WHITE))
+
+                name.asFancyString().color(Defaults.YELLOW).hoverEvent(HoverEvent.showText(hover))
+            }
+
+            sender.sendMessage(Defaults.neutral("Disguised players:".asFancyString().appendNewline().append(Component.join(Defaults.LIST_LIKE, entries))))
             Command.SINGLE_SUCCESS
         }
 
     fun register(): LiteralCommandNode<CommandSourceStack> = main.build()
     fun registerList(): LiteralCommandNode<CommandSourceStack> = list.build()
 
-    // File format: basically a txt file; 1st line = texture, 2nd line = signature
-    private fun readSkinFile(name: String): Pair<String, String> { // TODO
+    // File format: basically a txt file; texture + " " + signature
+    private fun readSkinFile(name: String): Pair<String, String> {
         val fName = name.replace(".skin", "")
         val file = File(Lukitils.getInstance().dataFolder, "skins/$fName.skin")
         if (!file.exists()) throw Defaults.CmdException("Skin file not found!".asFancyString())
 
-        val lines = file.readLines()
-        if (lines.size < 2 || lines[0].isBlank() || lines[1].isBlank()) throw Defaults.CmdException("Skin file '$fName.skin' is malformed!.".asFancyString())
-
-        return lines[0].trim() to lines[1].trim()
+        return file.readLines().firstOrNull()
+            ?.takeIf { it.contains(" ") }
+            ?.let { it.substringBefore(" ") to it.substringAfter(" ") }
+            ?: throw Defaults.CmdException("Skin file \"$fName.skin\" is malformed!.".asFancyString())
     }
 }
