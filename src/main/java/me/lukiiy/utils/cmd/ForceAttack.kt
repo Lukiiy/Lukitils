@@ -9,8 +9,6 @@ import io.papermc.paper.command.brigadier.argument.resolvers.selector.EntitySele
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
-import net.kyori.adventure.text.Component
-import org.bukkit.entity.Entity
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Mob
 
@@ -27,12 +25,12 @@ object ForceAttack {
                     if (entities.isEmpty()) throw Defaults.CmdException("There are no entities to target others".asFancyString())
                     if (angryAt !is LivingEntity) throw Defaults.CmdException("You can only set entities to target a living entity".asFancyString())
 
-                    entities.forEach { entity ->
-                        entity.target = angryAt
-                        entity.isAggressive = true
+                    entities.forEach {
+                        it.target = angryAt
+                        it.isAggressive = true
                     }
 
-                    it.source.sender.sendMessage(Defaults.neutral(Component.text("${entities.size} ${(if (entities.size == 1) "entity" else "entities")}").color(Defaults.YELLOW).append(" ${if (entities.size == 1) "is" else "are"} now targeting ".asFancyString()).append(angryAt.name().color(Defaults.YELLOW))))
+                    it.source.sender.sendMessage(Defaults.neutral(if (entities.size == 1) entities.first().name() else "${entities.size} entities".asFancyString().color(Defaults.YELLOW).append(" ${if (entities.size == 1) "is" else "are"} now targeting ".asFancyString()).append(angryAt.name().color(Defaults.YELLOW))))
                     Command.SINGLE_SUCCESS
                 })
         )

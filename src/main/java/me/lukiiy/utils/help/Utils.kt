@@ -43,14 +43,19 @@ import java.util.UUID
 object Utils : Listener {
     val USERNAME_REGEX = Regex("^[A-Za-z0-9_]{1,16}$")
 
-    internal val originalSkins = mutableMapOf<UUID, ProfileProperty?>()
-    internal val originalNametags = mutableMapOf<UUID, String>()
+    private val originalSkins = mutableMapOf<UUID, ProfileProperty?>()
+    private val originalNametags = mutableMapOf<UUID, String>()
 
     // Component Help!
     fun adminCmdFeedback(sender: CommandSender, message: String) {
         if (!Lukitils.getInstance().config.getBoolean("commandFeedback")) return
 
-        val senderName = if (sender is ConsoleCommandSender) "Server".asFancyString() else sender.name()
+        val senderName = when (sender) {
+            is ConsoleCommandSender -> "Server".asFancyString()
+            is Player -> sender.displayName().hoverEvent(HoverEvent.showEntity(Key.key(Key.MINECRAFT_NAMESPACE, "player"), sender.uniqueId, sender.name()))
+            else -> sender.name()
+        }
+
         val msg: Component = Component.translatable("chat.type.admin").arguments(senderName, message.asFancyString()).color(NamedTextColor.GRAY).decorate(TextDecoration.ITALIC)
 
         Bukkit.getOnlinePlayers().stream().filter { it.hasPermission("minecraft.admin.command_feedback") && it != sender }.forEach { it.sendMessage(msg) }
@@ -282,12 +287,9 @@ object Utils : Listener {
             playerProfile = profile
 
             val newName = Component.text(profile.name ?: name)
-            val team = scoreboard.getPlayerTeam(this)
 
-            val fName = if (team != null) Component.empty().append(team.prefix()).append(newName).append(team.suffix()) else newName
-
-            playerListName(fName)
-            displayName(fName)
+            playerListName(newName)
+            displayName(newName)
             refreshForViewers(this, (viewers ?: Bukkit.getOnlinePlayers()).filter { it.uniqueId != uniqueId })
         }, null)
     }
@@ -302,6 +304,8 @@ object Utils : Listener {
         applyProfile(profile, viewers)
     }
 
+    fun getIdChangedPlayerName(player: UUID): String? = originalNametags[player]
+    fun getIdChangedPlayerSkin(player: UUID): ProfileProperty? = originalSkins[player]
 
     internal fun refreshForViewers(target: Player, viewers: Collection<Player>) {
         viewers.forEach { v ->
