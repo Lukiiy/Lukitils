@@ -32,6 +32,7 @@ class Boot : PluginBootstrap {
                 register(Identity.register(), "Change your identity")
                 register(Identity.registerList(), "Lists every player using /identity")
                 register(ForceAttack.register(), "Forces entities to attack selected targets")
+                register(Statistics.register(), "Gets someone's statistic")
             }
         }
     }
