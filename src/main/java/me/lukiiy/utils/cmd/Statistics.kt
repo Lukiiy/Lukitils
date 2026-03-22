@@ -22,7 +22,25 @@ object Statistics {
         .requires { it.sender.hasPermission("statistics".asPermission()) }
         .then(Commands.argument("player", ArgumentTypes.player())
             .then(Commands.argument("statistic", StringArgumentType.string())
+                .suggests { _, builder ->
+                    Statistic.entries.forEach { builder.suggest(it.name.lowercase()) }
+
+                    builder.buildFuture()
+                }
                 .then(Commands.argument("type", StringArgumentType.word())
+                    .suggests { ctx, builder ->
+                        val statistic = runCatching {
+                            Statistic.valueOf(StringArgumentType.getString(ctx, "statistic").normalize().uppercase())
+                        }.getOrNull()
+
+                        when (statistic?.type) {
+                            Statistic.Type.BLOCK, Statistic.Type.ITEM -> Material.entries.filter { !it.isLegacy }.forEach { builder.suggest(it.name.lowercase()) }
+                            Statistic.Type.ENTITY -> EntityType.entries.forEach { builder.suggest(it.name.lowercase()) }
+                            else -> { }
+                        }
+
+                        builder.buildFuture()
+                    }
                     .executes {
                         val sender = it.source.sender
                         val player = it.getPlayerOrThrow("player")
@@ -48,7 +66,7 @@ object Statistics {
 
     private fun handle(sender: CommandSender, target: Player, statisticName: String, typeName: String?) {
         val statistic = runCatching {
-            Statistic.valueOf(statisticName.trim().replace('-', '_').replace(' ', '_').uppercase())
+            Statistic.valueOf(statisticName.normalize().uppercase())
         }.getOrElse {
             throw Defaults.CmdException(Component.text("No statistic was found"))
         }
@@ -72,10 +90,12 @@ object Statistics {
         sender.sendMessage(Defaults.neutral(Component.empty().append(target.name().color(Defaults.YELLOW)).append(" has ".asFancyString()).append(Component.text(statistic.key().value()).color(Defaults.GREEN)).append(" set to ".asFancyString()).append(Component.text(value).color(Defaults.YELLOW))))
     }
 
+    private fun String.normalize() = this.trim().replace('-', '_').replace(' ', '_')
+
     private fun resolveMaterial(input: String?): Material? {
         if (input == null) return null
 
-        val normalized = input.trim().replace('-', '_').replace(' ', '_')
+        val normalized = input.normalize()
 
         return Material.matchMaterial(normalized) ?: runCatching { Material.valueOf(normalized.uppercase()) }.getOrNull()
     }
@@ -83,6 +103,6 @@ object Statistics {
     private fun resolveEntity(input: String?): EntityType? {
         if (input == null) return null
 
-        return runCatching { EntityType.valueOf(input.trim().replace('-', '_').replace(' ', '_').uppercase()) }.getOrNull()
+        return runCatching { EntityType.valueOf(input.normalize().uppercase()) }.getOrNull()
     }
 }
