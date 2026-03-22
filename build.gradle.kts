@@ -33,7 +33,7 @@ tasks {
     build { dependsOn(shadowJar) }
 
     processResources {
-        val props = mapOf("version" to version)
+        val props = mapOf("version" to version, "description" to rootProject.description)
 
         inputs.properties(props)
         filteringCharset = "UTF-8"
