@@ -1,5 +1,6 @@
 package me.lukiiy.utils.idk
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.Lukitils
 import me.lukiiy.utils.help.MassEffect
@@ -8,12 +9,15 @@ import me.lukiiy.utils.help.Utils.boundedScale
 import me.lukiiy.utils.help.Utils.removeTransientMod
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.title.Title
+import org.bukkit.Bukkit
 import org.bukkit.Particle
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.util.Vector
 import java.time.Duration
+import java.util.UUID
+import java.util.concurrent.ThreadLocalRandom
 
 
 object LukiMassEffects {
@@ -178,6 +182,36 @@ object LukiMassEffects {
         override fun id() = "inventoryboom"
     }
 
+    private val ROLLBACK: MassEffect = object : MassEffect {
+        private val tasks = mutableMapOf<UUID, ScheduledTask>()
+
+        override fun apply(player: Player, intensity: Double) {
+            val snapshot = player.location.clone()
+            val delay = (20 + (1.0 - intensity.boundedScale(1.0)) * 60 + ThreadLocalRandom.current().nextDouble() * 40).toLong()
+
+            val task = Bukkit.getGlobalRegionScheduler().runDelayed(Lukitils.getInstance(), {
+                player.scheduler.run(Lukitils.getInstance(), { _ ->
+                    player.teleport(snapshot.apply {
+                        yaw = player.location.yaw
+                        pitch = player.location.pitch
+                    })
+                }, null)
+
+                tasks.remove(player.uniqueId)
+            }, delay)
+
+            tasks[player.uniqueId] = task
+        }
+
+        override fun clear(player: Player) {
+            tasks.remove(player.uniqueId)?.cancel()
+        }
+
+        override fun name() = "Rollback"
+        override fun description() = "Is it your connection?"
+        override fun id() = "rollback"
+    }
+
     fun init() {
         Lukitils.getInstance().apply {
             addMassEffect(DEMO)
@@ -188,6 +222,7 @@ object LukiMassEffects {
             addMassEffect(LOWGRAVITY)
             addMassEffect(LONGARMS)
             addMassEffect(INVBOOM)
+            addMassEffect(ROLLBACK)
         }
     }
 }
