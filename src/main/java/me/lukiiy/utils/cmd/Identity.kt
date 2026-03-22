@@ -72,34 +72,28 @@ object Identity {
 
                     Command.SINGLE_SUCCESS
                 })
-                .then(Commands.argument("player_name", StringArgumentType.word()).executes {
+                .then(Commands.argument("name", StringArgumentType.word()).executes {
                     val sender = it.source.sender
                     val target = it.getPlayerOrThrow("player")
-                    val source = StringArgumentType.getString(it, "player_name")
+                    val name = StringArgumentType.getString(it, "name")
 
-                    target.setTextures(source)
+                    if (name.endsWith(".skin")) {
+                        val (texture, signature) = readSkinFile(name)
+
+                        target.setTextures(texture, signature)
+                    } else target.setTextures(name)
+
                     changedSkin.add(target.uniqueId)
                     sender.sendMessage(Defaults.neutral((if (sender == target) "Your skin has been updated".asFancyString() else Component.empty().append(target.name().color(Defaults.YELLOW)).append("'s skin has been updated ".asFancyString()))))
 
                     Command.SINGLE_SUCCESS
                 })
-                .then(Commands.argument("texture_or_file", StringArgumentType.string())
-                    .executes {
-                        val sender = it.source.sender
-                        val target = it.getPlayerOrThrow("player")
-                        val (texture, signature) = readSkinFile(StringArgumentType.getString(it, "texture_or_file"))
-
-                        target.setTextures(texture, signature)
-                        changedSkin.add(target.uniqueId)
-                        sender.sendMessage(Defaults.neutral((if (sender == target) "Your skin has updated".asFancyString() else Component.empty().append(target.name().color(Defaults.YELLOW)).append("'s skin has updated".asFancyString()))))
-
-                        Command.SINGLE_SUCCESS
-                    }
+                .then(Commands.argument("texture", StringArgumentType.string())
                     .then(Commands.argument("signature", StringArgumentType.greedyString()).executes {
                         val sender = it.source.sender
                         val target = it.getPlayerOrThrow("player")
 
-                        target.setTextures(StringArgumentType.getString(it, "texture_or_file"), StringArgumentType.getString(it, "signature"))
+                        target.setTextures(StringArgumentType.getString(it, "texture"), StringArgumentType.getString(it, "signature"))
                         changedSkin.add(target.uniqueId)
                         sender.sendMessage(Defaults.neutral((if (sender == target) "Your skin has updated".asFancyString() else Component.empty().append(target.name().color(Defaults.YELLOW)).append("'s skin has updated".asFancyString()))))
 
@@ -136,7 +130,7 @@ object Identity {
     fun register(): LiteralCommandNode<CommandSourceStack> = main.build()
     fun registerList(): LiteralCommandNode<CommandSourceStack> = list.build()
 
-    // File format: basically a txt file; texture + " " + signature
+    // File format: basically a txt file; texture + " " + signature; extension is ".skin"
     private fun readSkinFile(name: String): Pair<String, String> {
         val fName = name.replace(".skin", "")
         val file = File(Lukitils.getInstance().dataFolder, "skins/$fName.skin")
