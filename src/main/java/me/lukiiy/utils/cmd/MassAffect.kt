@@ -63,7 +63,10 @@ object MassAffect {
         if (!toRevert && intensity != 1.0) msg = msg.append(" with intensity ".asFancyString()).append(intens.asFancyString()).color(Defaults.YELLOW)
         val mark = targets.mark(Style.style(Defaults.YELLOW))
 
-        targets.forEach { if (toRevert) effect.clear(it) else effect.apply(it, intensity + 1) }
+        targets.forEach {
+            if (toRevert) effect.clear(it) else effect.apply(it, intensity + 1)
+        }
+
         Utils.adminCmdFeedback(sender, "Massaffected ${mark.asPlainString()} with ${effect.name()} and intensity $intens")
         sender.sendMessage(Defaults.neutral(msg.append(" to ".asFancyString()).append(mark)))
     }

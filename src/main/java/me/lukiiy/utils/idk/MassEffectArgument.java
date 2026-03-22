@@ -18,13 +18,16 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class MassEffectArgument implements CustomArgumentType.Converted<MassEffect, String> {
-    private final CommandSyntaxException NOT_FOUND = Defaults.CmdException(Component.text("Effect \"$type\" doesn't exist."));
+    private static CommandSyntaxException NotFound(String type) {
+        return Defaults.CmdException(Component.text("No effect \"").append(Component.text(type).color(Defaults.RED)).append(Component.text("\" was found")));
+    }
 
     @Override
     public @NotNull MassEffect convert(@NotNull String nativeType) throws CommandSyntaxException {
-        MassEffect m = Lukitils.getInstance().getMassEffects().get(nativeType);
-        if (m == null) throw NOT_FOUND;
-        return m;
+        MassEffect mass = Lukitils.getInstance().getMassEffects().get(nativeType);
+        if (mass == null) throw NotFound(nativeType);
+
+        return mass;
     }
 
     @Override
@@ -35,10 +38,12 @@ public class MassEffectArgument implements CustomArgumentType.Converted<MassEffe
     @Override
     public <S> @NotNull CompletableFuture<Suggestions> listSuggestions(@NotNull CommandContext<S> context, SuggestionsBuilder builder) {
         Map<String, MassEffect> map = Lukitils.getInstance().getMassEffects();
+
         map.keySet().forEach(it -> {
             if (it.toLowerCase().startsWith(builder.getRemainingLowerCase())) {
-                MassEffect m = map.get(it);
-                builder.suggest(it, MessageComponentSerializer.message().serialize(Component.text(m.name()).color(Defaults.YELLOW).append(Component.text(" → ").color(Defaults.ORANGE)).append(Component.text(m.description()).color(Defaults.YELLOW))));
+                MassEffect mass = map.get(it);
+
+                builder.suggest(it, MessageComponentSerializer.message().serialize(Component.text(mass.name()).color(Defaults.YELLOW).append(Component.text(" → ").color(Defaults.ORANGE)).append(Component.text(mass.description()).color(Defaults.YELLOW))));
             }
         });
 
