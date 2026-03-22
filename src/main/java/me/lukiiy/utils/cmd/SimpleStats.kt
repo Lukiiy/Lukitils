@@ -105,15 +105,17 @@ object SimpleStats {
     }
 
     private fun <T> handle(sender: CommandSender, targets: List<Player>, amount: T, act: (Player, T) -> Unit, actDesc: String) {
+        val fAmount = amount.toString().let { if ('.' in it) it.trimEnd('0').trimEnd('.') else it }.asFancyString().color(Defaults.YELLOW)
+
         targets.forEach {
             act(it, amount)
 
-            if (!Lukitils.getInstance().config.getBoolean("silentStats", true) && it != sender) it.sendMessage(Defaults.neutral("$actDesc by ".asFancyString().append(amount.toString().asFancyString().color(Defaults.YELLOW)).append(" (by ".asFancyString()).append(sender.name().color(Defaults.YELLOW)).append(")".asFancyString())))
+            if (!Lukitils.getInstance().config.getBoolean("silentStats", true) && it != sender) it.sendMessage(Defaults.neutral("$actDesc by ".asFancyString().append(fAmount).append(" (by ".asFancyString()).append(sender.name().color(Defaults.YELLOW)).append(")".asFancyString())))
         }
 
         val mark = targets.mark(Style.style(Defaults.YELLOW))
 
-        sender.sendMessage(Defaults.neutral("$actDesc ".asFancyString().append(mark).append(" by ".asFancyString()).append("$amount".asFancyString().color(Defaults.YELLOW))))
+        sender.sendMessage(Defaults.neutral("$actDesc ".asFancyString().append(mark).append(" by ".asFancyString()).append(fAmount)))
         Utils.adminCmdFeedback(sender, "$actDesc ${mark.asPlainString()} by $amount")
     }
 }
