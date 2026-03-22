@@ -90,7 +90,7 @@ object Statistics {
         val (stat, param) = value
 
         val msg = Component.empty().append(target.name().color(Defaults.YELLOW)).append(" has ".asFancyString())
-            .append(Component.text(statistic.key().value()).color(Defaults.GREEN))
+            .append(Component.translatable("stat.minecraft.${statistic.key().value()}", statistic.key().value().uppercase()).color(Defaults.GREEN))
             .run { if (param != null) append(" (${param})".asFancyString()) else this }
             .append(" set to ".asFancyString())
             .append(Component.text(stat).color(Defaults.YELLOW))
