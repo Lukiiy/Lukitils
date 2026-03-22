@@ -26,6 +26,7 @@ object SimpleStats {
     private val healUnit: (Player, Double) -> Unit = { t, a ->
         t.apply {
             heal(a)
+
             activePotionEffects.forEach { if (it.type.effectCategory != PotionEffectType.Category.BENEFICIAL) { t.removePotionEffect(it.type) } }
             fireTicks = 0
         }
@@ -107,7 +108,7 @@ object SimpleStats {
         targets.forEach {
             act(it, amount)
 
-            if (!Lukitils.getInstance().config.getBoolean("silentStats", true) && it != sender) it.sendMessage(Defaults.neutral("$actDesc by ".asFancyString().append(" (by ".asFancyString()).append(sender.name().color(Defaults.YELLOW)).append(")".asFancyString())))
+            if (!Lukitils.getInstance().config.getBoolean("silentStats", true) && it != sender) it.sendMessage(Defaults.neutral("$actDesc by ".asFancyString().append(amount.toString().asFancyString().color(Defaults.YELLOW)).append(" (by ".asFancyString()).append(sender.name().color(Defaults.YELLOW)).append(")".asFancyString())))
         }
 
         val mark = targets.mark(Style.style(Defaults.YELLOW))
