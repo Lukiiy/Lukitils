@@ -72,22 +72,30 @@ object Statistics {
         }
 
         val value = when (statistic.type) {
-            Statistic.Type.UNTYPED -> target.getStatistic(statistic)
+            Statistic.Type.UNTYPED -> target.getStatistic(statistic) to null
 
             Statistic.Type.BLOCK, Statistic.Type.ITEM -> {
-                val material = resolveMaterial(typeName) ?: run { throw Defaults.CmdException("Please insert a valid block/item!".asFancyString()) }
+                val material = resolveMaterial(typeName) ?: throw Defaults.CmdException("Please insert a valid block/item!".asFancyString())
 
-                target.getStatistic(statistic, material)
+                target.getStatistic(statistic, material) to material.name.lowercase()
             }
 
             Statistic.Type.ENTITY -> {
-                val entity = resolveEntity(typeName) ?: run { throw Defaults.CmdException("Please insert a valid entity!".asFancyString()) }
+                val entity = resolveEntity(typeName) ?: throw Defaults.CmdException("Please insert a valid entity!".asFancyString())
 
-                target.getStatistic(statistic, entity)
+                target.getStatistic(statistic, entity) to entity.name.lowercase()
             }
         }
 
-        sender.sendMessage(Defaults.neutral(Component.empty().append(target.name().color(Defaults.YELLOW)).append(" has ".asFancyString()).append(Component.text(statistic.key().value()).color(Defaults.GREEN)).append(" set to ".asFancyString()).append(Component.text(value).color(Defaults.YELLOW))))
+        val (stat, param) = value
+
+        val msg = Component.empty().append(target.name().color(Defaults.YELLOW)).append(" has ".asFancyString())
+            .append(Component.text(statistic.key().value()).color(Defaults.GREEN))
+            .run { if (param != null) append(" (${param})".asFancyString()) else this }
+            .append(" set to ".asFancyString())
+            .append(Component.text(stat).color(Defaults.YELLOW))
+
+        sender.sendMessage(Defaults.neutral(msg))
     }
 
     private fun String.normalize() = this.trim().replace('-', '_').replace(' ', '_')
