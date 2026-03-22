@@ -3,6 +3,7 @@ package me.lukiiy.utils.help
 import com.destroystokyo.paper.profile.PlayerProfile
 import com.destroystokyo.paper.profile.ProfileProperty
 import com.mojang.brigadier.context.CommandContext
+import com.mojang.brigadier.suggestion.SuggestionsBuilder
 import com.viaversion.viaversion.api.Via
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver
@@ -333,6 +334,17 @@ object Utils : Listener {
 
     @JvmStatic
     fun CommandContext<CommandSourceStack>.getPlayersOrThrow(arg: String): List<Player> = getArgument(arg, PlayerSelectorArgumentResolver::class.java).resolve(source).stream().toList().takeIf { it.isNotEmpty() } ?: throw Defaults.NOT_FOUND
+
+    @JvmStatic
+    fun <T> SuggestionsBuilder.suggestFiltered(entries: Iterable<T>, name: T.() -> String) {
+        val input = remainingLowerCase
+
+        entries.forEach {
+            val name = it.name()
+
+            if (name.contains(input)) suggest(name)
+        }
+    }
 
     // Misc Extensions!
     @JvmStatic

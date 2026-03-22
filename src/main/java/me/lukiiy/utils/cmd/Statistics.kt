@@ -10,6 +10,7 @@ import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
 import me.lukiiy.utils.help.Utils.getPlayerOrThrow
+import me.lukiiy.utils.help.Utils.suggestFiltered
 import net.kyori.adventure.text.Component
 import org.bukkit.Material
 import org.bukkit.Statistic
@@ -23,8 +24,7 @@ object Statistics {
         .then(Commands.argument("player", ArgumentTypes.player())
             .then(Commands.argument("statistic", StringArgumentType.string())
                 .suggests { _, builder ->
-                    Statistic.entries.forEach { builder.suggest(it.name.lowercase()) }
-
+                    builder.suggestFiltered(Statistic.entries) { name.lowercase() }
                     builder.buildFuture()
                 }
                 .then(Commands.argument("type", StringArgumentType.word())
@@ -34,8 +34,8 @@ object Statistics {
                         }.getOrNull()
 
                         when (statistic?.type) {
-                            Statistic.Type.BLOCK, Statistic.Type.ITEM -> Material.entries.filter { !it.isLegacy }.forEach { builder.suggest(it.name.lowercase()) }
-                            Statistic.Type.ENTITY -> EntityType.entries.forEach { builder.suggest(it.name.lowercase()) }
+                            Statistic.Type.BLOCK, Statistic.Type.ITEM -> builder.suggestFiltered(Material.entries.filter { !it.isLegacy }) { name.lowercase() }
+                            Statistic.Type.ENTITY -> builder.suggestFiltered(EntityType.entries) { name.lowercase() }
                             else -> { }
                         }
 
