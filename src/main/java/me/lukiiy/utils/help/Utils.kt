@@ -187,9 +187,12 @@ object Utils : Listener {
     @JvmStatic
     @JvmOverloads
     fun Player.setNametag(newUsername: String, viewers: Collection<Player>? = null): Boolean {
-        if (uniqueId !in originalNametags) originalNametags[uniqueId] = playerProfile.name ?: name
+        val original = originalNametags.getOrPut(uniqueId) { playerProfile.name ?: name }
+        val trimmed = newUsername.trim().takeIf { USERNAME_REGEX.matches(it) } ?: return false
 
-        return newUsername.trim().takeIf { USERNAME_REGEX.matches(it) }?.let { safeProfile(uniqueId, it) }?.also { applyProfile(it, viewers) } != null
+        Bukkit.getScoreboardManager().mainScoreboard.getEntryTeam(original)?.addEntry(trimmed)
+
+        return safeProfile(uniqueId, trimmed).also { applyProfile(it, viewers) }.let { true }
     }
 
     /**
@@ -241,7 +244,11 @@ object Utils : Listener {
     @JvmStatic
     @JvmOverloads
     fun Player.resetNametag(viewers: Collection<Player>? = null): Boolean {
-        applyProfile(safeProfile(uniqueId, originalNametags.remove(uniqueId) ?: name), viewers)
+        val original = originalNametags.remove(uniqueId) ?: name
+
+        Bukkit.getScoreboardManager().mainScoreboard.getEntryTeam(playerProfile.name ?: name)?.removeEntry(playerProfile.name ?: name)
+
+        applyProfile(safeProfile(uniqueId, original), viewers)
         return true
     }
 
@@ -261,17 +268,18 @@ object Utils : Listener {
         return true
     }
 
-    fun Player.applyProfile(profile: PlayerProfile, viewers: Collection<Player>?) {
-        scheduler.run(Lukitils.getInstance(), {
-            playerProfile = profile
+    fun Player.applyProfile(profile: PlayerProfile, viewers: Collection<Player>?) = scheduler.run(Lukitils.getInstance(), {
+        playerProfile = profile
 
-            val newName = Component.text(profile.name ?: name)
+        val base = Component.text(profile.name ?: name)
+        val team = Bukkit.getScoreboardManager().mainScoreboard.getEntryTeam(originalNametags[uniqueId] ?: name)
+        val full = team?.let { it.prefix().append(base).append(it.suffix()) } ?: base
 
-            playerListName(newName)
-            displayName(newName)
-            refreshForViewers(this, (viewers ?: Bukkit.getOnlinePlayers()).filter { it.uniqueId != uniqueId })
-        }, null)
-    }
+        playerListName(full)
+        displayName(full)
+
+        refreshForViewers(this, (viewers ?: Bukkit.getOnlinePlayers()).filter { it.uniqueId != uniqueId })
+    }, null)
 
     private fun Player.applyTextureAndRefresh(prop: ProfileProperty, viewers: Collection<Player>?) {
         if (uniqueId !in originalSkins) originalSkins[uniqueId] = playerProfile.properties.firstOrNull { it.name.equals("textures", true) }?.copy()
