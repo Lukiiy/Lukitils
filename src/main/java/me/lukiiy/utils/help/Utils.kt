@@ -200,9 +200,11 @@ object Utils : Listener {
     @JvmStatic
     @JvmOverloads
     fun Player.setTextures(username: String, viewers: Collection<Player>? = null): Boolean {
-        val uuid = Bukkit.getPlayerExact(username)?.uniqueId
+        snapshotOriginalSkin(this)
 
-        if (uuid != null) applyStoredOrFetch(this, uuid, viewers) { Bukkit.createProfile(username).apply { complete(true) } } else fetchAndApplyTextures(this, viewers) { Bukkit.createProfile(username).apply { complete(true) } }
+        val uuid = Bukkit.getPlayerExact(username)?.uniqueId
+        if (uuid != null) applyStoredOrFetch(this, uuid, viewers) { Bukkit.createProfile(username).apply { complete(true) } }
+        else fetchAndApplyTextures(this, viewers) { Bukkit.createProfile(username).apply { complete(true) } }
 
         return true
     }
@@ -215,7 +217,9 @@ object Utils : Listener {
     @JvmStatic
     @JvmOverloads
     fun Player.setTextures(skin: UUID, viewers: Collection<Player>? = null): Boolean {
+        snapshotOriginalSkin(this)
         applyStoredOrFetch(this, skin, viewers) { Bukkit.createProfile(skin, null).apply { complete(true) } }
+
         return true
     }
 
@@ -228,7 +232,9 @@ object Utils : Listener {
     @JvmStatic
     @JvmOverloads
     fun Player.setTextures(skin: String, signature: String, viewers: Collection<Player>? = null): Boolean {
+        snapshotOriginalSkin(this)
         applyTextureAndRefresh(ProfileProperty("textures", skin, signature), viewers)
+
         return true
     }
 
@@ -248,34 +254,12 @@ object Utils : Listener {
 
                 setProperties(originalSkins.remove(id)?.let { base + it } ?: base)
             }
+
             applyProfile(profile, viewers)
         } else fetchAndApplyTextures(this, viewers) { Bukkit.createProfile(uniqueId, null).apply { complete(true) } }
 
         return true
     }
-
-    internal fun safeProfile(uuid: UUID, name: String): PlayerProfile = runCatching { Bukkit.createProfileExact(uuid, name) }.getOrElse { Bukkit.createProfile(uuid, name) }
-
-    internal fun fetchAndApplyTextures(player: Player, viewers: Collection<Player>?, profileSupplier: () -> PlayerProfile) = Bukkit.getAsyncScheduler().runNow(Lukitils.getInstance()) {
-        val prop = runCatching {
-            profileSupplier().properties.firstOrNull { it.name.equals("textures", true) }
-        }.getOrNull()
-
-        Bukkit.getGlobalRegionScheduler().run(Lukitils.getInstance()) {
-            prop?.let { player.applyTextureAndRefresh(it, viewers) }
-        }
-    }
-
-    internal fun applyStoredOrFetch(player: Player, targetUuid: UUID, viewers: Collection<Player>?, profileSupplier: () -> PlayerProfile) =
-        if (targetUuid in originalSkins) {
-            val profile = safeProfile(player.uniqueId, player.playerProfile.name ?: player.name).apply {
-                val base = properties.filterNot { it.name.equals("textures", true) }
-
-                setProperties(originalSkins[targetUuid]?.let { base + it } ?: base)
-            }
-
-            player.applyProfile(profile, viewers)
-        } else fetchAndApplyTextures(player, viewers, profileSupplier)
 
     fun Player.applyProfile(profile: PlayerProfile, viewers: Collection<Player>?) {
         scheduler.run(Lukitils.getInstance(), {
@@ -298,6 +282,33 @@ object Utils : Listener {
 
         applyProfile(profile, viewers)
     }
+
+    internal fun safeProfile(uuid: UUID, name: String): PlayerProfile = runCatching { Bukkit.createProfileExact(uuid, name) }.getOrElse { Bukkit.createProfile(uuid, name) }
+
+    internal fun snapshotOriginalSkin(player: Player) {
+        if (player.uniqueId !in originalSkins) originalSkins[player.uniqueId] = player.playerProfile.properties.firstOrNull { it.name.equals("textures", true) }?.copy()
+    }
+
+    internal fun fetchAndApplyTextures(player: Player, viewers: Collection<Player>?, profileSupplier: () -> PlayerProfile) = Bukkit.getAsyncScheduler().runNow(Lukitils.getInstance()) {
+        val prop = runCatching {
+            profileSupplier().properties.firstOrNull { it.name.equals("textures", true) }
+        }.getOrNull()
+
+        Bukkit.getGlobalRegionScheduler().run(Lukitils.getInstance()) {
+            prop?.let { player.applyTextureAndRefresh(it, viewers) }
+        }
+    }
+
+    internal fun applyStoredOrFetch(player: Player, targetUuid: UUID, viewers: Collection<Player>?, profileSupplier: () -> PlayerProfile) =
+        if (targetUuid in originalSkins) {
+            val profile = safeProfile(player.uniqueId, player.playerProfile.name ?: player.name).apply {
+                val base = properties.filterNot { it.name.equals("textures", true) }
+
+                setProperties(originalSkins[targetUuid]?.let { base + it } ?: base)
+            }
+
+            player.applyProfile(profile, viewers)
+        } else fetchAndApplyTextures(player, viewers, profileSupplier)
 
     fun getIdChangedPlayerName(player: UUID): String? = originalNametags[player]
     fun getIdChangedPlayerSkin(player: UUID): ProfileProperty? = originalSkins[player]
