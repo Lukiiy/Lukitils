@@ -38,22 +38,26 @@ object Identity {
                 .then(Commands.literal("#").executes {
                     val sender = it.source.sender
                     val target = it.getPlayerOrThrow("player")
+                    val uuid = target.uniqueId
 
+                    sender.sendMessage(Defaults.neutral(if (sender == target) "Your nametag has been reset".asFancyString() else Component.empty().append(Utils.getIdChangedPlayerName(uuid)!!.asFancyString().color(Defaults.YELLOW)).append("'s nametag has been reset".asFancyString())))
                     target.resetNametag()
-                    changedNametag.remove(target.uniqueId)
-                    sender.sendMessage(Defaults.neutral(if (sender == target) "Your nametag has been reset".asFancyString() else target.name().color(Defaults.YELLOW).append("'s nametag has been reset".asFancyString())))
+                    changedNametag.remove(uuid)
+
                     Command.SINGLE_SUCCESS
                 })
                 .then(Commands.argument("username", StringArgumentType.word()).executes {
                     val sender = it.source.sender
                     val target = it.getPlayerOrThrow("player")
+                    val uuid = target.uniqueId
                     val new = StringArgumentType.getString(it, "username")
 
                     if (!new.matches(Utils.USERNAME_REGEX)) throw Defaults.CmdException("Invalid username! Must only include alphanumeric characters, underscores, and must be within 16 characters.".asFancyString())
 
+                    sender.sendMessage(Defaults.neutral((if (sender == target) "Your nametag is now ".asFancyString() else Component.empty().append(target.name().color(Defaults.YELLOW)).append("'s nametag is now ".asFancyString())).append(new.asFancyString().color(Defaults.YELLOW))))
                     target.setNametag(new)
-                    changedNametag.add(target.uniqueId)
-                    sender.sendMessage(Defaults.neutral((if (sender == target) "Your nametag is now ".asFancyString() else target.name().color(Defaults.YELLOW).append("'s nametag is now ".asFancyString())).append(new.asFancyString().color(Defaults.YELLOW))))
+                    changedNametag.add(uuid)
+
                     Command.SINGLE_SUCCESS
                 })
             )
@@ -64,17 +68,19 @@ object Identity {
 
                     target.resetTextures()
                     changedSkin.remove(target.uniqueId)
-                    sender.sendMessage(Defaults.neutral((if (sender == target) "Your skin has been reset".asFancyString() else target.name().color(Defaults.YELLOW).append("'s skin has been reset".asFancyString()))))
+                    sender.sendMessage(Defaults.neutral((if (sender == target) "Your skin has been reset".asFancyString() else Component.empty().append(target.name().color(Defaults.YELLOW)).append("'s skin has been reset".asFancyString()))))
+
                     Command.SINGLE_SUCCESS
                 })
                 .then(Commands.argument("player_name", StringArgumentType.word()).executes {
                     val sender = it.source.sender
                     val target = it.getPlayerOrThrow("player")
-                    val sourceName = StringArgumentType.getString(it, "player_name")
+                    val source = StringArgumentType.getString(it, "player_name")
 
-                    target.setTextures(sourceName)
+                    target.setTextures(source)
                     changedSkin.add(target.uniqueId)
-                    sender.sendMessage(Defaults.neutral((if (sender == target) "Your skin has been updated".asFancyString() else target.name().color(Defaults.YELLOW).append("'s skin has been updated ".asFancyString()))))
+                    sender.sendMessage(Defaults.neutral((if (sender == target) "Your skin has been updated".asFancyString() else Component.empty().append(target.name().color(Defaults.YELLOW)).append("'s skin has been updated ".asFancyString()))))
+
                     Command.SINGLE_SUCCESS
                 })
                 .then(Commands.argument("texture_or_file", StringArgumentType.string())
@@ -85,7 +91,8 @@ object Identity {
 
                         target.setTextures(texture, signature)
                         changedSkin.add(target.uniqueId)
-                        sender.sendMessage(Defaults.neutral((if (sender == target) "Your skin has updated".asFancyString() else target.name().color(Defaults.YELLOW).append("'s skin has updated".asFancyString()))))
+                        sender.sendMessage(Defaults.neutral((if (sender == target) "Your skin has updated".asFancyString() else Component.empty().append(target.name().color(Defaults.YELLOW)).append("'s skin has updated".asFancyString()))))
+
                         Command.SINGLE_SUCCESS
                     }
                     .then(Commands.argument("signature", StringArgumentType.greedyString()).executes {
@@ -94,7 +101,8 @@ object Identity {
 
                         target.setTextures(StringArgumentType.getString(it, "texture_or_file"), StringArgumentType.getString(it, "signature"))
                         changedSkin.add(target.uniqueId)
-                        sender.sendMessage(Defaults.neutral((if (sender == target) "Your skin has updated".asFancyString() else target.name().color(Defaults.YELLOW).append("'s skin has updated".asFancyString()))))
+                        sender.sendMessage(Defaults.neutral((if (sender == target) "Your skin has updated".asFancyString() else Component.empty().append(target.name().color(Defaults.YELLOW)).append("'s skin has updated".asFancyString()))))
+
                         Command.SINGLE_SUCCESS
                     })
                 )
@@ -121,6 +129,7 @@ object Identity {
             }
 
             sender.sendMessage(Defaults.neutral("Disguised players:".asFancyString().appendNewline().append(Component.join(Defaults.LIST_LIKE, entries))))
+
             Command.SINGLE_SUCCESS
         }
 
