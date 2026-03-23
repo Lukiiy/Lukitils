@@ -5,32 +5,36 @@ import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.tree.LiteralCommandNode
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
-import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import me.lukiiy.utils.Defaults
 import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
 import me.lukiiy.utils.help.Utils.getPlayerOrThrow
 import me.lukiiy.utils.help.Utils.suggestFiltered
 import net.kyori.adventure.text.Component
+import org.bukkit.Bukkit
 import org.bukkit.Material
+import org.bukkit.OfflinePlayer
 import org.bukkit.Statistic
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.EntityType
-import org.bukkit.entity.Player
 
 object Statistics {
     private val main = Commands.literal("statistics")
         .requires { it.sender.hasPermission("statistics".asPermission()) }
-        .then(Commands.argument("player", ArgumentTypes.player())
+        .then(Commands.argument("player", StringArgumentType.word())
+            .suggests { _, builder ->
+                builder.suggestFiltered(Bukkit.getOnlinePlayers()) { name }
+                builder.buildFuture()
+            }
             .then(Commands.argument("statistic", StringArgumentType.string())
                 .suggests { _, builder ->
-                    builder.suggestFiltered(Statistic.entries) { name.lowercase() }
+                    builder.suggestFiltered(Statistic.entries) { name.uppercase() }
                     builder.buildFuture()
                 }
                 .then(Commands.argument("type", StringArgumentType.word())
-                    .suggests { ctx, builder ->
+                    .suggests { context, builder ->
                         val statistic = runCatching {
-                            Statistic.valueOf(StringArgumentType.getString(ctx, "statistic").normalize().uppercase())
+                            Statistic.valueOf(StringArgumentType.getString(context, "statistic").normalize().uppercase())
                         }.getOrNull()
 
                         when (statistic?.type) {
@@ -43,20 +47,19 @@ object Statistics {
                     }
                     .executes {
                         val sender = it.source.sender
-                        val player = it.getPlayerOrThrow("player")
-                        val statistic = StringArgumentType.getString(it, "statistic")
-                        val type = StringArgumentType.getString(it, "type")
+                        val targetInput = StringArgumentType.getString(it, "player")
+                        val player = Bukkit.getPlayer(targetInput) ?: Bukkit.getOfflinePlayerIfCached(targetInput) ?: throw Defaults.NOT_FOUND
 
-                        handle(sender, player, statistic, type)
+                        handle(sender, player, StringArgumentType.getString(it, "statistic"), StringArgumentType.getString(it, "type"))
                         Command.SINGLE_SUCCESS
                     }
                 )
                 .executes {
                     val sender = it.source.sender
-                    val player = it.getPlayerOrThrow("player")
-                    val statistic = StringArgumentType.getString(it, "statistic")
+                    val targetInput = StringArgumentType.getString(it, "player")
+                    val player = Bukkit.getPlayer(targetInput) ?: Bukkit.getOfflinePlayerIfCached(targetInput) ?: throw Defaults.NOT_FOUND
 
-                    handle(sender, player, statistic, null)
+                    handle(sender, player, StringArgumentType.getString(it, "statistic"), null)
                     Command.SINGLE_SUCCESS
                 }
             )
@@ -64,7 +67,9 @@ object Statistics {
 
     fun register(): LiteralCommandNode<CommandSourceStack> = main.build()
 
-    private fun handle(sender: CommandSender, target: Player, statisticName: String, typeName: String?) {
+    private fun handle(sender: CommandSender, target: OfflinePlayer, statisticName: String, typeName: String?) {
+        if (!target.hasPlayedBefore()) throw Defaults.CmdException(Component.text("This player has never played here before"))
+
         val statistic = runCatching {
             Statistic.valueOf(statisticName.normalize().uppercase())
         }.getOrElse {
@@ -89,7 +94,9 @@ object Statistics {
 
         val (stat, param) = value
 
-        val msg = Component.empty().append(target.name().color(Defaults.YELLOW)).append(" has ".asFancyString())
+        val name = target.player?.name() ?: (target.name ?: "Player").asFancyString()
+
+        val msg = Component.empty().append(name.color(Defaults.YELLOW)).append(" has ".asFancyString())
             .append(Component.translatable("stat.minecraft.${statistic.key().value()}", statistic.key().value().uppercase()).color(Defaults.GREEN))
             .run { if (param != null) append(" (${param})".asFancyString()) else this }
             .append(" set to ".asFancyString())

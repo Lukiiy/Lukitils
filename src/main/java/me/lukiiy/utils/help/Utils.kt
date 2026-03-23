@@ -355,7 +355,7 @@ object Utils : Listener {
         entries.forEach {
             val name = it.name()
 
-            if (name.contains(input)) suggest(name)
+            if (name.lowercase().startsWith(input)) suggest(name)
         }
     }
 
