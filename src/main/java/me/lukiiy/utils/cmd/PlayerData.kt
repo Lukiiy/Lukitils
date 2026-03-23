@@ -3,6 +3,7 @@ package me.lukiiy.utils.cmd
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.tree.LiteralCommandNode
+import com.viaversion.viaversion.api.protocol.version.ProtocolVersion
 import io.papermc.paper.command.brigadier.CommandSourceStack
 import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.dialog.Dialog
@@ -64,7 +65,7 @@ object PlayerData {
     private fun handle(sender: CommandSender, target: OfflinePlayer) {
         if (!target.hasPlayedBefore()) throw Defaults.CmdException(Component.text("This player has never played here before"))
 
-        val name = target.player?.name() ?: target.name?.asFancyString() ?: "Player".asFancyString()
+        val name = target.player?.name() ?: (target.name ?: "Player").asFancyString()
         val head = if (target.player != null) Component.`object`(ObjectContents.playerHead(target.player!!.playerProfile)).appendSpace() else Component.empty()
         val header = head.append(name.color(Defaults.YELLOW).append(Component.text("'s Info").color(Defaults.GRAY)))
 
@@ -86,7 +87,8 @@ object PlayerData {
             fancyData("Total Experience", player.totalExperience),
             player.getAttribute(Attribute.ARMOR)?.value?.let { if (it > 0) fancyData("Armor", it) else null },
             fancyData("Gamemode", player.gameMode.name),
-            fancyData("Client Brand", player.clientBrandName ?: "Unidentified")
+            fancyData("Client Brand", player.clientBrandName ?: "Unidentified"),
+            fancyData("Client Version", formatVersion(player))
         )
 
         val flags = listOfNotNull(
@@ -151,5 +153,12 @@ object PlayerData {
         val daysAgo = ChronoUnit.DAYS.between(inputDate, now)
 
         return "${inputDate.format(formatter)} ${if (daysAgo > 0) "($daysAgo days ago)" else ""}"
+    }
+
+    private fun formatVersion(player: Player): String {
+        val protocol = player.getProtocol()
+        val ver = ProtocolVersion.getProtocol(protocol)
+
+        return if (ver.isKnown) ver.name else "Protocol $protocol"
     }
 }
