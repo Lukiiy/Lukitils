@@ -16,6 +16,7 @@ import me.lukiiy.utils.help.Utils.asPermission
 import me.lukiiy.utils.help.Utils.getProtocol
 import me.lukiiy.utils.help.Utils.getSpawn
 import me.lukiiy.utils.help.Utils.copyableComponent
+import me.lukiiy.utils.help.Utils.suggestFiltered
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
 import net.kyori.adventure.text.TextComponent
@@ -39,9 +40,7 @@ object PlayerData {
         .requires { it.sender.hasPermission("playerdata".asPermission()) }
         .then(Commands.argument("player", StringArgumentType.string())
             .suggests { _, builder ->
-                val input = builder.remaining.lowercase()
-
-                Bukkit.getOnlinePlayers().stream().map { it.name }.filter { it.startsWith(input) }.forEach { builder.suggest(it) }
+                builder.suggestFiltered(Bukkit.getOnlinePlayers()) { name }
                 builder.buildFuture()
             }
             .executes {
@@ -140,7 +139,7 @@ object PlayerData {
         }
     }
 
-    private fun category(lines: List<Component>): DialogBody = DialogBody.plainMessage(Component.join(JoinConfiguration.newlines(), lines))
+    private fun category(lines: List<Component>): DialogBody = DialogBody.plainMessage(Component.join(JoinConfiguration.newlines(), lines), 256)
 
     private fun fancyData(title: String, value: Any): TextComponent = Component.text("$title: ").append(Component.text(value.toString()).color(Defaults.ORANGE))
 
