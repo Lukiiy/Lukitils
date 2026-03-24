@@ -35,7 +35,7 @@ object SimpleStats {
     private val feedUnit: (Player, Int) -> Unit = { t, a ->
         t.apply {
             foodLevel += a
-            saturation = 5f
+            saturation += 5f
             exhaustion = 0f
         }
     }
