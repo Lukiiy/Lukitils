@@ -7,6 +7,7 @@ import io.papermc.paper.command.brigadier.Commands
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.EntitySelectorArgumentResolver
 import me.lukiiy.utils.Defaults
+import me.lukiiy.utils.help.Utils
 import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
 import org.bukkit.entity.LivingEntity
@@ -30,7 +31,9 @@ object ForceAttack {
                         it.isAggressive = true
                     }
 
-                    it.source.sender.sendMessage(Defaults.neutral(if (entities.size == 1) entities.first().name() else "${entities.size} entities".asFancyString().color(Defaults.YELLOW).append(" ${if (entities.size == 1) "is" else "are"} now targeting ".asFancyString()).append(angryAt.name().color(Defaults.YELLOW))))
+                    it.source.sender.sendMessage(Defaults.neutral((if (entities.size == 1) entities.first().name() else "${entities.size} entities".asFancyString().color(Defaults.YELLOW)).append(" ${if (entities.size == 1) "is" else "are"} now targeting ".asFancyString()).append(angryAt.name().color(Defaults.YELLOW))))
+                    Utils.adminCmdFeedback(it.source.sender, "Set ${entities.size} entities to target ${angryAt.name()}")
+
                     Command.SINGLE_SUCCESS
                 })
         )
