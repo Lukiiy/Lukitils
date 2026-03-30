@@ -38,7 +38,6 @@ object QuickThrow {
 
     private fun handle(sender: CommandSender, entityType: EntityType, speed: Double = 1.0) {
         val p = sender as? Player ?: throw Defaults.NON_PLAYER
-        val entityKey = entityType.translationKey()
 
         p.world.spawnEntity(p.eyeLocation, entityType).apply {
             if (this is Projectile) this.shooter = p
@@ -46,7 +45,7 @@ object QuickThrow {
             velocity = p.location.direction.normalize().multiply(speed)
         }
 
-        Utils.adminCmdFeedback(sender, "Quick threw a $entityKey")
-        sender.sendMessage(Defaults.neutral("Quick throwing ".asFancyString().append(Component.translatable(entityKey).color(Defaults.YELLOW)).append(" with speed ".asFancyString()).append(speed.fancy().asFancyString().color(Defaults.YELLOW))))
+        Utils.adminCmdFeedback(sender, "Quick threw a ${entityType.name}")
+        sender.sendMessage(Defaults.neutral("Quick throwing ".asFancyString().append(Component.translatable(entityType.translationKey()).color(Defaults.YELLOW)).append(" with speed ".asFancyString()).append(speed.fancy().asFancyString().color(Defaults.YELLOW))))
     }
 }
