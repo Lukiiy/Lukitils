@@ -291,6 +291,14 @@ object Utils : Listener {
         applyProfile(profile, viewers)
     }
 
+    @JvmStatic
+    fun Player.getSkinProperties(): Pair<String, String>? {
+        val prop = playerProfile.properties.firstOrNull { it.name.equals("textures", true) } ?: return null
+        val signature = prop.signature ?: return null
+
+        return prop.value to signature
+    }
+
     internal fun safeProfile(uuid: UUID, name: String): PlayerProfile = runCatching { Bukkit.createProfileExact(uuid, name) }.getOrElse { Bukkit.createProfile(uuid, name) }
 
     internal fun snapshotOriginalSkin(player: Player) {

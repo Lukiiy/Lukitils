@@ -12,6 +12,7 @@ import me.lukiiy.utils.help.Utils
 import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
 import me.lukiiy.utils.help.Utils.getPlayerOrThrow
+import me.lukiiy.utils.help.Utils.getSkinProperties
 import me.lukiiy.utils.help.Utils.resetNametag
 import me.lukiiy.utils.help.Utils.resetTextures
 import me.lukiiy.utils.help.Utils.setNametag
@@ -72,6 +73,24 @@ object Identity {
 
                     Command.SINGLE_SUCCESS
                 })
+                .then(Commands.literal("-s")
+                    .then(Commands.argument("name", StringArgumentType.word()).executes { // save current skin to file
+                        val sender = it.source.sender
+                        val target = it.getPlayerOrThrow("player")
+                        val name = StringArgumentType.getString(it, "name")
+
+                        val targetTexture = target.getSkinProperties()
+                        if (targetTexture == null) {
+                            sender.sendMessage(Defaults.fail("Couldn't save the skin.".asFancyString()))
+                            Command.SINGLE_SUCCESS
+                        }
+
+                        saveSkinFile(name, targetTexture!!)
+                        sender.sendMessage(Defaults.neutral(Component.empty().append(name.asFancyString().color(Defaults.YELLOW)).append(".skin has been saved".asFancyString())))
+
+                        Command.SINGLE_SUCCESS
+                    })
+                )
                 .then(Commands.argument("name", StringArgumentType.word()).executes {
                     val sender = it.source.sender
                     val target = it.getPlayerOrThrow("player")
@@ -130,8 +149,14 @@ object Identity {
     fun register(): LiteralCommandNode<CommandSourceStack> = main.build()
     fun registerList(): LiteralCommandNode<CommandSourceStack> = list.build()
 
-    // File format: basically a txt file; texture + " " + signature; extension is ".skin"
-    private fun readSkinFile(name: String): Pair<String, String> {
+    // .skin file format: basically a txt file; texture + " " + signature; extension is ".skin"
+
+    /**
+     * Reads a .skin file in Lukitils/skins/
+     * @param name Name of the .skin file
+     * @return If valid, will return a valid pair of skin texture & signature
+     */
+    fun readSkinFile(name: String): Pair<String, String> {
         val fName = name.replace(".skin", "")
         val file = File(Lukitils.getInstance().dataFolder, "skins/$fName.skin")
         if (!file.exists()) throw Defaults.CmdException("Skin file not found!".asFancyString())
@@ -140,5 +165,19 @@ object Identity {
             ?.takeIf { it.contains(" ") }
             ?.let { it.substringBefore(" ") to it.substringAfter(" ") }
             ?: throw Defaults.CmdException("Skin file \"$fName.skin\" is malformed!.".asFancyString())
+    }
+
+    /**
+     * Compiles skin data to a .skin file
+     * @param name Name of the .skin file
+     * @return If valid, will save the file to Lukitils/skins/
+     */
+    fun saveSkinFile(name: String, data: Pair<String, String>) {
+        val fName = name.replace(".skin", "")
+
+        val dir = File(Lukitils.getInstance().dataFolder, "skins")
+        if (!dir.exists()) dir.mkdirs()
+
+        File(dir, "$fName.skin").writeText("${data.first} ${data.second}")
     }
 }
