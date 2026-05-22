@@ -64,14 +64,15 @@ object Vanish : Listener {
 
     private fun handle(sender: CommandSender, target: Player) {
         val vanish = toggle(target)
-        var message = Defaults.neutral(Component.text("Vanish is now ").append(if (vanish) Defaults.ON else Defaults.OFF))
+        val base = Defaults.neutral(Component.text("Vanish is now ").append(if (vanish) Defaults.ON else Defaults.OFF))
 
-        if (target != sender) {
-            sender.sendMessage(message.append(Component.text(" for ").color(Defaults.GRAY)).append(target.name().color(Defaults.YELLOW)))
-            message = message.append(Component.text(" (by ${sender.name})").color(Defaults.GRAY))
+        if (target == sender) {
+            sender.sendMessage(base)
+            return
         }
 
-        if (!Lukitils.getInstance().config.getBoolean("silentStats", true)) target.sendMessage(message)
+        sender.sendMessage(base.append(Component.text(" for ").color(Defaults.GRAY)).append(target.name().color(Defaults.YELLOW)))
+        if (!Lukitils.getInstance().config.getBoolean("silentStats", true)) target.sendMessage(base.append(Component.text(" (by ${sender.name})").color(Defaults.GRAY)))
     }
 
     private val list = Commands.literal("vanishlist")
