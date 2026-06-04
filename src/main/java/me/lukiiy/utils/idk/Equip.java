@@ -1,16 +1,17 @@
 package me.lukiiy.utils.idk;
 
-import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
+import io.papermc.paper.event.entity.EntityEquipmentChangedEvent;
 import me.lukiiy.utils.Lukitils;
 import me.lukiiy.utils.help.EquipView;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EntityEquipment;
@@ -38,12 +39,7 @@ public class Equip implements Listener {
         TRACKER.values().removeIf(view -> {
             view.removeViewer(watcher);
 
-            if (view.getViewers().isEmpty()) {
-                removeViewer(view.getPlayer());
-                return true;
-            }
-
-            return false;
+            return view.getViewers().isEmpty();
         });
     }
 
@@ -76,15 +72,12 @@ public class Equip implements Listener {
 
     @EventHandler
     public void invClose(InventoryCloseEvent e) {
-        Player p = (Player) e.getPlayer();
-        Inventory closed = e.getInventory();
-
-        if (closed.getHolder(false) instanceof EquipView) removeViewer(p);
+        if (e.getInventory().getHolder(false) instanceof EquipView) removeViewer((Player) e.getPlayer());
     }
 
-    @EventHandler(ignoreCancelled = true)
-    public void armorChange(PlayerArmorChangeEvent e) {
-        if (isBeingWatched(e.getPlayer())) updateView(e.getPlayer());
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void equipChange(EntityEquipmentChangedEvent e) {
+        if (e.getEntity() instanceof Player p && isBeingWatched(p)) updateView(p);
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -100,43 +93,39 @@ public class Equip implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void invClick(InventoryClickEvent e) {
-        Player viewer = (Player) e.getWhoClicked();
         Inventory clicked = e.getClickedInventory();
         if (clicked == null) return;
 
-        if (isBeingWatched(viewer) && clicked == viewer.getInventory() && e.getSlotType() == InventoryType.SlotType.ARMOR) Bukkit.getGlobalRegionScheduler().execute(Lukitils.getInstance(), () -> updateView(viewer));
-
-        if (clicked.getHolder(false) instanceof EquipView view) {
-            e.setCancelled(true);
-
-            Player target = view.getPlayer();
-            EntityEquipment equip = target.getEquipment();
-            ItemStack cursor = e.getCursor();
-            ItemStack current = e.getCurrentItem();
-
-            switch (e.getSlot()) {
-                case 0 -> equip.setHelmet(cursor, true);
-                case 1 -> equip.setChestplate(cursor, true);
-                case 2 -> equip.setLeggings(cursor, true);
-                case 3 -> equip.setBoots(cursor, true);
-                default -> equip.setItemInOffHand(cursor, true);
-            }
-
-            viewer.setItemOnCursor(current == null ? ItemStack.empty() : current);
-            updateView(target);
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void invDrag(InventoryDragEvent e) {
-        Inventory inv = e.getInventory();
-
-        if (inv.getHolder(false) instanceof EquipView) {
+        if (e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY && e.getView().getTopInventory().getHolder(false) instanceof EquipView) {
             e.setCancelled(true);
             return;
         }
 
-        Player p = (Player) e.getWhoClicked();
-        if (isBeingWatched(p) && inv == p.getInventory()) Bukkit.getGlobalRegionScheduler().execute(Lukitils.getInstance(), () -> updateView(p));
+        if (!(clicked.getHolder(false) instanceof EquipView view)) return;
+
+        e.setCancelled(true);
+
+        Player viewer = (Player) e.getWhoClicked();
+        EntityEquipment equip = view.getPlayer().getEquipment();
+        ItemStack cursor = e.getCursor();
+        ItemStack current = e.getCurrentItem();
+
+        switch (e.getSlot()) {
+            case 0 -> equip.setHelmet(cursor, true);
+            case 1 -> equip.setChestplate(cursor, true);
+            case 2 -> equip.setLeggings(cursor, true);
+            case 3 -> equip.setBoots(cursor, true);
+            case 4 -> equip.setItemInOffHand(cursor, true);
+            default -> {
+                return;
+            }
+        }
+
+        viewer.setItemOnCursor(current == null ? ItemStack.empty() : current);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void invDrag(InventoryDragEvent e) {
+        if (e.getInventory().getHolder(false) instanceof EquipView) e.setCancelled(true);
     }
 }
