@@ -22,14 +22,16 @@ object InventoryViewer : Listener {
         return Commands.literal("invsee")
             .requires { reqInvsee(it.sender) }
             .then(Commands.argument("player", ArgumentTypes.player())
-            .executes {
-                val sender = it.source.sender as? Player ?: throw Defaults.NOT_FOUND
-                val target = it.getPlayerOrThrow("player")
+                .executes {
+                    val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
+                    val target = it.getPlayerOrThrow("player")
 
-                handle(sender, target, { sender, target -> sender.openInventory(target.inventory) }, "inventory")
-                Command.SINGLE_SUCCESS
-            })
-        .build()
+                    handle(sender, target, {
+                        s, t -> s.openInventory(t.inventory)
+                    }, "inventory")
+                    Command.SINGLE_SUCCESS
+                })
+            .build()
     }
 
     fun registerEChest(): LiteralCommandNode<CommandSourceStack> {
@@ -40,13 +42,17 @@ object InventoryViewer : Listener {
                     val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
                     val target = it.getPlayerOrThrow("player")
 
-                    handle(sender, target, {s, t -> s.openInventory(t.enderChest)}, "ender chest")
+                    handle(sender, target, {
+                        s, t -> s.openInventory(t.enderChest)
+                    }, "ender chest")
                     Command.SINGLE_SUCCESS
                 })
             .executes {
                 val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
 
-                handle(sender, sender, {s, t -> s.openInventory(t.enderChest)}, "ender chest")
+                handle(sender, sender, {
+                    s, t -> s.openInventory(t.enderChest)
+                }, "ender chest")
                 Command.SINGLE_SUCCESS
             }
         .build()
@@ -60,20 +66,25 @@ object InventoryViewer : Listener {
                     val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
                     val target = it.getPlayerOrThrow("player")
 
-                    handle(sender, target, {s, t -> s.openInventory(Equip.getView(t, s).inventory)}, "equipment")
+                    handle(sender, target, {
+                        s, t -> s.openInventory(Equip.getView(t, s).inventory)
+                    }, "equipment")
                     Command.SINGLE_SUCCESS
                 })
             .executes {
-                val sender = it.source.sender as? Player ?: throw Defaults.NOT_FOUND
+                val sender = it.source.sender as? Player ?: throw Defaults.NON_PLAYER
 
-                handle(sender, sender, {s, t -> s.openInventory(Equip.getView(t, s).inventory)}, "equipment")
+                handle(sender, sender, {
+                    s, t -> s.openInventory(Equip.getView(t, s).inventory)
+                }, "equipment")
                 Command.SINGLE_SUCCESS
             }
-        .build()
+            .build()
     }
 
     private fun handle(sender: Player, target: Player, act: (Player, Player) -> Unit, actDesc: String) {
         sender.sendMessage(Defaults.neutral(Component.text("Inspecting ").append(target.name().color(Defaults.YELLOW)).append(Component.text("'s $actDesc"))))
+
         act(sender, target)
     }
 }

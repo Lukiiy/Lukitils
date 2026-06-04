@@ -20,6 +20,7 @@ public class EquipView implements InventoryHolder {
     public EquipView(Player p) {
         this.inv = Bukkit.createInventory(this, InventoryType.HOPPER, p.name().append(Component.text("'s Equipment")));
         this.p = p;
+
         load();
     }
 
