@@ -162,9 +162,15 @@ object Utils : Listener {
 
     @JvmStatic
     fun Player.getProtocol(): Int = try {
+        Class.forName("com.viaversion.viaversion.api.Via")
+
         Via.getAPI().getPlayerVersion(this)
-    } catch (_: Exception) {
-        player!!.protocolVersion // wow.
+    } catch (_: Throwable) {
+        try {
+            protocolVersion
+        } catch (_: Throwable) {
+            0
+        }
     }
 
     @JvmStatic
@@ -173,6 +179,7 @@ object Utils : Listener {
         val instance = this.getAttribute(attribute) ?: return
 
         instance.removeModifier(key)
+
         if (value != 0.0) instance.addTransientModifier(AttributeModifier(key, value, AttributeModifier.Operation.MULTIPLY_SCALAR_1))
     }
 
