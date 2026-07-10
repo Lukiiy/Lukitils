@@ -84,16 +84,11 @@ object Utils : Listener {
     }
 
     @JvmStatic
-    fun Location.copyableComponent(): Component { // Probably needs refactoring
-        val dim = when (this.world?.environment) {
-            World.Environment.NORMAL -> "overworld"
-            World.Environment.NETHER -> "the_nether"
-            World.Environment.THE_END -> "the_end"
-            else -> ""
-        }
-
+    fun Location.usableComponent(): Component {
         val coords = "${this.blockX} ${this.blockY} ${this.blockZ}"
-        return coords.asFancyString().hoverEvent(HoverEvent.showText(Component.text("Click to copy command!").color(Defaults.YELLOW))).clickEvent(ClickEvent.copyToClipboard("/execute ${if (dim.isNotEmpty()) "in minecraft:$dim" else ""} run tp @s $coords")).append(" @ ${this.world.name}".asFancyString())
+        val worldName = world?.name ?: "???"
+
+        return "$coords [$worldName]".asFancyString().color(Defaults.YELLOW).appendSpace().append("[COPY]".asFancyString().color(Defaults.GREEN).clickEvent(ClickEvent.copyToClipboard(coords))).appendSpace().append("[GOTO]".asFancyString().color(Defaults.ORANGE).clickEvent(ClickEvent.callback { (it as Player).teleport(this) }))
     }
 
     @JvmStatic

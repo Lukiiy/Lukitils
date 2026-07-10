@@ -15,7 +15,7 @@ import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
 import me.lukiiy.utils.help.Utils.getProtocol
 import me.lukiiy.utils.help.Utils.getSpawn
-import me.lukiiy.utils.help.Utils.copyableComponent
+import me.lukiiy.utils.help.Utils.usableComponent
 import me.lukiiy.utils.help.Utils.suggestFiltered
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
@@ -97,10 +97,10 @@ object PlayerData {
         )
 
         val locations = listOfNotNull(
-            Component.text("Current: ").append(player.location.copyableComponent().color(Defaults.ORANGE)),
-            Component.text("Spawn: ").append(player.getSpawn().copyableComponent().color(Defaults.ORANGE)),
-            if (player.compassTarget != player.getSpawn()) { Component.text("Compass: ").append(player.compassTarget.copyableComponent().color(Defaults.ORANGE)) } else null,
-            player.lastDeathLocation?.let { Component.text("Last death: ").append(it.copyableComponent().color(Defaults.ORANGE)) }
+            Component.text("Current: ").append(player.location.usableComponent().color(Defaults.ORANGE)),
+            Component.text("Spawn: ").append(player.getSpawn().usableComponent().color(Defaults.ORANGE)),
+            if (player.compassTarget != player.getSpawn()) { Component.text("Compass: ").append(player.compassTarget.usableComponent().color(Defaults.ORANGE)) } else null,
+            player.lastDeathLocation?.let { Component.text("Last death: ").append(it.usableComponent().color(Defaults.ORANGE)) }
         )
 
         if (sender is Player && sender.getProtocol() > 770) {
