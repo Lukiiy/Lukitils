@@ -11,6 +11,7 @@ import io.papermc.paper.registry.data.dialog.DialogBase
 import io.papermc.paper.registry.data.dialog.body.DialogBody
 import io.papermc.paper.registry.data.dialog.type.DialogType
 import me.lukiiy.utils.Defaults
+import me.lukiiy.utils.help.Utils
 import me.lukiiy.utils.help.Utils.asFancyString
 import me.lukiiy.utils.help.Utils.asPermission
 import me.lukiiy.utils.help.Utils.getProtocol
@@ -156,6 +157,9 @@ object PlayerData {
 
     private fun formatVersion(player: Player): String {
         val protocol = player.getProtocol()
+
+        if (!Utils.hasVia) return "Protocol $protocol"
+
         val ver = ProtocolVersion.getProtocol(protocol)
 
         return if (ver.isKnown) ver.name else "Protocol $protocol"

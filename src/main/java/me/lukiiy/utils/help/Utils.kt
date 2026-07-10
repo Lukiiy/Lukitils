@@ -156,16 +156,10 @@ object Utils : Listener {
     }
 
     @JvmStatic
-    fun Player.getProtocol(): Int = try {
-        Class.forName("com.viaversion.viaversion.api.Via")
-
+    fun Player.getProtocol(): Int = if (hasVia) {
         Via.getAPI().getPlayerVersion(this)
-    } catch (_: Throwable) {
-        try {
-            protocolVersion
-        } catch (_: Throwable) {
-            0
-        }
+    } else {
+        runCatching { protocolVersion }.getOrDefault(0)
     }
 
     @JvmStatic
@@ -374,11 +368,10 @@ object Utils : Listener {
     fun ProfileProperty.copy(): ProfileProperty = ProfileProperty(name, value, signature)
 
     val isFolia: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        try {
-            Class.forName("io.papermc.paper.threadedregions.RegionizedServer")
-            true
-        } catch (_: ClassNotFoundException) {
-            false
-        }
+        runCatching { Class.forName("io.papermc.paper.threadedregions.RegionizedServer") }.isSuccess
+    }
+
+    val hasVia: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        runCatching { Class.forName("com.viaversion.viaversion.api.Via") }.isSuccess
     }
 }
