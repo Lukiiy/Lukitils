@@ -2,4 +2,4 @@
 commandFeedback: true
 
 # Toggles some commands' feedback message (like /heal saying who healed, /fly, /invulnerability, ...)
-silentStats: true
+silentStats: false
