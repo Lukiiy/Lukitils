@@ -1,7 +1,7 @@
 plugins {
     java
     kotlin("jvm") version "2.3.10"
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19"
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.24"
     id("com.gradleup.shadow") version "9.4.1"
 }
 
@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.21.9-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("26.3.build.+")
     implementation(kotlin("stdlib"))
     implementation(files("libs/Lecour.jar"))
     compileOnly("com.viaversion:viaversion-api:5.6.0")
@@ -42,4 +42,4 @@ tasks {
     }
 }
 
-kotlin.jvmToolchain(21)
+kotlin.jvmToolchain(25)
