@@ -6,6 +6,7 @@ authors: [ Lukiiy ]
 description: ${description}
 bootstrapper: me.lukiiy.utils.Boot
 folia-supported: true
+mixin-config: lukitils.mixins.json
 dependencies:
   server:
     ViaVersion:
