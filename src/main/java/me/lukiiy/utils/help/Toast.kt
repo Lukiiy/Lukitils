@@ -42,7 +42,7 @@ object Toast {
             })
         }
 
-        val adv = Bukkit.getUnsafe().loadAdvancement(key, gson.toJson(advancement))
+        val adv = Bukkit.getUnsafe().loadAdvancement(key, gson.toJson(advancement)) ?: return
         players.forEach { it?.getAdvancementProgress(adv)?.awardCriteria("a") }
 
         Bukkit.getGlobalRegionScheduler().runDelayed(Lukitils.getInstance(), {
