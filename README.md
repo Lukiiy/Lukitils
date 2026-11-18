@@ -1,5 +1,7 @@
 # Lukitils
 
+> This is just a branch to test [Mosaic](https://github.com/Lukiiy/Mosaic/)! You can safely ignore it.
+
 A PaperMC plugin that adds some cool, silly and quite useful commands.  
 
 #### Why?
